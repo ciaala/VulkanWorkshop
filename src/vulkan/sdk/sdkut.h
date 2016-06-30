@@ -5,6 +5,9 @@
 #ifndef VULKANWORKSHOP_SDKUT_H
 #define VULKANWORKSHOP_SDKUT_H
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #include <vulkan/vulkan.h>
 #include <cstdlib>
 #include <vector>

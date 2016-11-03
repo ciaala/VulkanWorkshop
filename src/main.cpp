@@ -5,8 +5,11 @@
 using namespace std;
 
 int main() {
-    cout << "Hello, World!" << endl;
+
     VulkanSetup vulkanSetup;
-    cout << "EngineName: " << vulkanSetup.inst. << endl;
+    cout << "ApplicationName: " << vulkanSetup.app_info.pApplicationName << endl;
+    cout << "EngineName: " << vulkanSetup.app_info.pEngineName << endl;
+    cout << "Vulkan Initialised: " << std::boolalpha << vulkanSetup.isVulkanReady() << endl;
+    cout << "Valid GPU: " << vulkanSetup.countGPUs() << endl;
     return 0;
 }

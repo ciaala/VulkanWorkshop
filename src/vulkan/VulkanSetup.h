@@ -7,64 +7,31 @@
 
 #include "sdk/sdkut.h"
 #include <iostream>
+#include <vector>
 
 #define APP_SHORT_NAME "VulkanWorkshop"
+#define ENGINE_SHORT_NAME "TerrificEngine"
 using namespace vksdk;
 
 class VulkanSetup {
 public:
     VkApplicationInfo app_info = {};
     VkInstanceCreateInfo inst_info = {};
+    std::vector<VkPhysicalDevice> gpus;
+    VkResult enumerateGPU_res;
 
     VkInstance inst;
     VkResult res;
 
-    VulkanSetup() {
-        struct sample_info info = {};
-        init_global_layer_properties(info);
+    VulkanSetup();
+    bool isVulkanReady() const;
+    ~VulkanSetup();
 
-        /* VULKAN_KEY_START */
-
-        // initialize the VkApplicationInfo structure
-
-        app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        app_info.pNext = NULL;
-        app_info.pApplicationName = APP_SHORT_NAME;
-        app_info.applicationVersion = 1;
-        app_info.pEngineName = APP_SHORT_NAME;
-        app_info.engineVersion = 1;
-        app_info.apiVersion = VK_API_VERSION_1_0;
-
-        // initialize the VkInstanceCreateInfo structure
-
-        inst_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        inst_info.pNext = NULL;
-        inst_info.flags = 0;
-        inst_info.pApplicationInfo = &app_info;
-        inst_info.enabledExtensionCount = 0;
-        inst_info.ppEnabledExtensionNames = NULL;
-        inst_info.enabledLayerCount = 0;
-        inst_info.ppEnabledLayerNames = NULL;
+    int countGPUs() const;
+private:
+    void post_init_setup();
 
 
-        res = vkCreateInstance(&inst_info, NULL, &inst);
-        if (res == VK_ERROR_INCOMPATIBLE_DRIVER) {
-            std::cout << "cannot find a compatible Vulkan ICD\n";
-            exit(-1);
-        } else if (res) {
-            std::cout << "unknown error\n";
-            exit(-1);
-        }
-
-
-
-        /* VULKAN_KEY_END */
-
-    }
-
-    ~VulkanSetup() {
-        vkDestroyInstance(inst, NULL);
-    }
 };
 
 

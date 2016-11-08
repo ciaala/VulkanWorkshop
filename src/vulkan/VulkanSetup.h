@@ -20,15 +20,11 @@ public:
 
     std::vector<VkQueueFamilyProperties> queue_properties;
 
-    VkResult enumerateGPU_res;
     uint32_t queue_family_count;
     VkInstance inst;
-    VkResult res;
-
-    VulkanSetup();
 
     bool isVulkanReady() const;
-
+    VulkanSetup();
     ~VulkanSetup();
 
     int countGPUs() const;
@@ -36,12 +32,21 @@ public:
     VkDeviceQueueCreateInfo queue_info;
     VkPhysicalDeviceProperties physicalDeviceProperties;
 
-    VkDeviceCreateInfo device_info;
+    VkDeviceCreateInfo physical_device_info;
     VkDevice virtualDevice;
 
     VkCommandBuffer commandBuffer;
     VkCommandPool cmd_pool;
     VkCommandPoolCreateInfo cmd_pool_info;
+
+
+    VkResult createDevice_res = VK_RESULT_MAX_ENUM;
+    VkResult res = VK_RESULT_MAX_ENUM;
+    VkResult command_pool_res = VK_RESULT_MAX_ENUM;
+    VkResult command_buffer_res = VK_RESULT_MAX_ENUM;
+    VkResult enumerated_physical_device_res = VK_RESULT_MAX_ENUM;
+    VkResult enumerateGPU_res = VK_RESULT_MAX_ENUM;
+
 private:
     void post_init_setup();
 
@@ -50,7 +55,6 @@ private:
 
     void createVirtualDevice();
 
-    VkResult createDevice_res;
 
     void destroyVirtualDevice();
 
@@ -64,6 +68,7 @@ private:
     void createCommandBuffer();
 
     void destroyCommandBuffers();
+
 };
 
 

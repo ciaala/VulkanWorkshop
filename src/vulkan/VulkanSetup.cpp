@@ -67,17 +67,19 @@ bool VulkanSetup::isVulkanReady() const {
 
 void VulkanSetup::post_init_setup() {
     uint32_t gpu_count = 0;
-    VkResult res = vkEnumeratePhysicalDevices(this->inst, &gpu_count, NULL);
+    this->enumerated_physical_device_res = vkEnumeratePhysicalDevices(this->inst, &gpu_count, NULL);
+    assert(this->enumerated_physical_device_res == VK_SUCCESS);
     this->gpus.resize(gpu_count);
     this->enumerateGPU_res = vkEnumeratePhysicalDevices(this->inst, &gpu_count, this->gpus.data());
+    assert(this->enumerateGPU_res == VK_SUCCESS);
 
     vkGetPhysicalDeviceProperties(this->gpus[0], &(this->physicalDeviceProperties));
     if (!get_queue_families()) {
         cerr << "No queue found" << endl;
     } else{
         createVirtualDevice();
-        createCommandPool();
-        createCommandBuffer();
+        //createCommandPool();
+        //createCommandBuffer();
     }
 }
 
@@ -108,23 +110,19 @@ bool VulkanSetup::get_queue_families() {
 }
 
 void VulkanSetup::createVirtualDevice() {
-    this->device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    this->device_info.pNext = NULL;
-    this->device_info.queueCreateInfoCount = 1;
-    this->device_info.pQueueCreateInfos = &queue_info;
-    this->device_info.enabledExtensionCount = 0;
-    this->device_info.ppEnabledExtensionNames = NULL;
-    this->device_info.enabledLayerCount = 0;
-    this->device_info.ppEnabledLayerNames = NULL;
-    this->device_info.pEnabledFeatures = NULL;
+    this->physical_device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    this->physical_device_info.pNext = NULL;
+    this->physical_device_info.queueCreateInfoCount = 1;
+    this->physical_device_info.pQueueCreateInfos = &queue_info;
+    this->physical_device_info.enabledExtensionCount = 0;
+    this->physical_device_info.ppEnabledExtensionNames = NULL;
+    this->physical_device_info.enabledLayerCount = 0;
+    this->physical_device_info.ppEnabledLayerNames = NULL;
+    this->physical_device_info.pEnabledFeatures = NULL;
 
 
-    createDevice_res = vkCreateDevice(this->gpus[0],
-                         &this->device_info,
-                         NULL,
-                         &this->virtualDevice);
-    assert(res == VK_SUCCESS);
-
+    this->createDevice_res = vkCreateDevice(this->gpus[0], &(this->physical_device_info), NULL, &(this->virtualDevice));
+    assert(createDevice_res == VK_SUCCESS);
 }
 
 void VulkanSetup::destroyVirtualDevice() {
@@ -146,9 +144,8 @@ void VulkanSetup::createCommandPool() {
     this->cmd_pool_info.queueFamilyIndex = this->queue_info.queueFamilyIndex;
     this->cmd_pool_info.flags = 0;
 
-    res =
-            vkCreateCommandPool(this->virtualDevice, &this->cmd_pool_info, NULL, &this->cmd_pool);
-    assert(res == VK_SUCCESS);
+    this->command_pool_res = vkCreateCommandPool(this->virtualDevice, &this->cmd_pool_info, NULL, &this->cmd_pool);
+    assert(command_pool_res == VK_SUCCESS);
 }
 
 void VulkanSetup::createCommandBuffer() {
@@ -158,14 +155,18 @@ void VulkanSetup::createCommandBuffer() {
     this->cmd.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     this->cmd.commandBufferCount = 1;
 
-    res = vkAllocateCommandBuffers(this->virtualDevice, &this->cmd, &this->commandBuffer);
-    assert(res == VK_SUCCESS);
+    this->command_buffer_res = vkAllocateCommandBuffers(this->virtualDevice, &this->cmd, &this->commandBuffer);
+    assert(command_buffer_res == VK_SUCCESS);
 }
 
 void VulkanSetup::destroyCommandBuffers() {
 
-    VkCommandBuffer cmd_bufs[1] = {this->commandBuffer};
-    vkFreeCommandBuffers(this->virtualDevice, this->cmd_pool, 1, cmd_bufs);
-    vkDestroyCommandPool(this->virtualDevice, this->cmd_pool, NULL);
+    if ( this->command_buffer_res == VK_SUCCESS) {
+        VkCommandBuffer cmd_bufs[1] = {this->commandBuffer};
+        vkFreeCommandBuffers(this->virtualDevice, this->cmd_pool, 1, cmd_bufs);
+    }
+    if ( this->command_pool_res == VK_SUCCESS ) {
+        vkDestroyCommandPool(this->virtualDevice, this->cmd_pool, NULL);
+    }
 }
 

@@ -23,7 +23,7 @@ set(SOURCE_FILES
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     find_package(XCB REQUIRED)
-    set(VULKAN_SDK /home/crypt/Developer/VulkanSDK/1.0.17.0)
+    set(VULKAN_SDK /home/crypt/Developer/VulkanSDK/1.0.26.0)
     set(PLATFORM_DIRECTORIES
             ${XCB_INCLUDE_DIRS})
     set(PLATFORM_LIBRARIES
@@ -37,7 +37,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(VULKAN_INCLUDES ${VULKAN_SDK}/x86_64/include)
 
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    set(VULKAN_SDK C:\\\\VulkanSDK\\\\1.0.30.0)
+    set(VULKAN_SDK C:\\\\VulkanSDK\\\\1.0.26.0)
     set(VULKAN_INCLUDES ${VULKAN_SDK}\\Include)
     set(VULKAN_LIBRARIES "${VULKAN_SDK}\\\\Source\\\\lib\\\\vulkan-1.dll")
   #  message(FATAL_ERROR ${VULKAN_LIBRARIES})

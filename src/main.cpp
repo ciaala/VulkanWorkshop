@@ -15,6 +15,7 @@ int main(int argc, char ** argv) {
     cout << "Queues: " << vulkanSetup.queue_family_count << endl;
     cout << "Queue selected: " << vulkanSetup.queue_info.queueFamilyIndex << endl;
 
-
+    cout << "Command Queue: " << vulkanSetup.cmd_pool_info.queueFamilyIndex << endl;
+    cout << "Command Queue flags: " << vulkanSetup.cmd_pool_info.flags << endl;
     return 0;
 }

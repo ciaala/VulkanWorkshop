@@ -14,26 +14,34 @@ using namespace vksdk;
 
 class VulkanSetup {
 public:
+    /*  struct VirtualDevice{ */
+    VkDeviceQueueCreateInfo queue_info;
+    uint32_t queue_family_count;
+    std::vector<VkQueueFamilyProperties> queue_properties;
+    VkDevice virtualDevice;
+    VkResult enumerated_physical_device_res = VK_RESULT_MAX_ENUM;
+    VkResult enumerateGPU_res = VK_RESULT_MAX_ENUM;
+    /* }; */
+
+    /* struct PhysicalDevice {*/
     VkApplicationInfo app_info = {};
     VkInstanceCreateInfo inst_info = {};
     std::vector<VkPhysicalDevice> gpus;
-
-    std::vector<VkQueueFamilyProperties> queue_properties;
-
-    uint32_t queue_family_count;
+    VkDeviceCreateInfo physical_device_info;
+    VkPhysicalDeviceProperties physicalDeviceProperties;
     VkInstance inst;
+    /*   }; */
+public:
+
 
     bool isVulkanReady() const;
+
     VulkanSetup();
+
     ~VulkanSetup();
 
     int countGPUs() const;
 
-    VkDeviceQueueCreateInfo queue_info;
-    VkPhysicalDeviceProperties physicalDeviceProperties;
-
-    VkDeviceCreateInfo physical_device_info;
-    VkDevice virtualDevice;
 
     VkCommandBuffer commandBuffer;
     VkCommandPool cmd_pool;
@@ -44,22 +52,19 @@ public:
     VkResult res = VK_RESULT_MAX_ENUM;
     VkResult command_pool_res = VK_RESULT_MAX_ENUM;
     VkResult command_buffer_res = VK_RESULT_MAX_ENUM;
-    VkResult enumerated_physical_device_res = VK_RESULT_MAX_ENUM;
-    VkResult enumerateGPU_res = VK_RESULT_MAX_ENUM;
+    float queue_priorities[1] = {0.0};
+
 
 private:
     void post_init_setup();
-
 
     bool get_queue_families();
 
     void createVirtualDevice();
 
-
     void destroyVirtualDevice();
 
     void createCommandPool();
-
 
     // FIELDS
 private:

@@ -40,10 +40,10 @@ VulkanSetup::VulkanSetup() {
 
     res = vkCreateInstance(&inst_info, NULL, &inst);
     if (res == VK_ERROR_INCOMPATIBLE_DRIVER) {
-        std::cout << "cannot find a compatible Vulkan ICD\n";
+        std::cout << "cannot find a compatible Vulkan ICD" << endl;
         exit(-1);
     } else if (res) {
-        std::cout << "unknown error\n";
+        std::cout << "unknown error" << endl;
         exit(-1);
     } else {
         post_init_setup();
@@ -72,14 +72,15 @@ void VulkanSetup::post_init_setup() {
     this->gpus.resize(gpu_count);
     this->enumerateGPU_res = vkEnumeratePhysicalDevices(this->inst, &gpu_count, this->gpus.data());
     assert(this->enumerateGPU_res == VK_SUCCESS);
-
-    vkGetPhysicalDeviceProperties(this->gpus[0], &(this->physicalDeviceProperties));
-    if (!get_queue_families()) {
-        cerr << "No queue found" << endl;
-    } else{
-        createVirtualDevice();
-        //createCommandPool();
-        //createCommandBuffer();
+    if ( this->gpus.size() > 0) {
+        vkGetPhysicalDeviceProperties(this->gpus[0], &(this->physicalDeviceProperties));
+        if (!get_queue_families()) {
+            cerr << "No queue found" << endl;
+        } else {
+            createVirtualDevice();
+            createCommandPool();
+            createCommandBuffer();
+        }
     }
 }
 
@@ -110,6 +111,17 @@ bool VulkanSetup::get_queue_families() {
 }
 
 void VulkanSetup::createVirtualDevice() {
+
+
+    this->queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    this->queue_info.pNext = NULL;
+    this->queue_info.queueCount = 1;
+    this->queue_info.pQueuePriorities = queue_priorities;
+
+
+
+
+
     this->physical_device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     this->physical_device_info.pNext = NULL;
     this->physical_device_info.queueCreateInfoCount = 1;

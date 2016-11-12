@@ -17,14 +17,14 @@
           <root url="file://C:/msys64/mingw64/x86_64-w64-mingw32/include" />
           <root url="file://C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/6.2.0/include" />
           <root url="file://C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/6.2.0/include-fixed" />
-          <root url="file://C:/VulkanSDK/1.0.26.0/Include" />
+          <root url="file://C:/VulkanSDK/1.0.30.0/Include" />
         </CLASSES>
         <SOURCES>
           <root url="file://C:/msys64/mingw64/include" />
           <root url="file://C:/msys64/mingw64/x86_64-w64-mingw32/include" />
           <root url="file://C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/6.2.0/include" />
           <root url="file://C:/msys64/mingw64/lib/gcc/x86_64-w64-mingw32/6.2.0/include-fixed" />
-          <root url="file://C:/VulkanSDK/1.0.26.0/Include" />
+          <root url="file://C:/VulkanSDK/1.0.30.0/Include" />
         </SOURCES>
       </library>
     </orderEntry>

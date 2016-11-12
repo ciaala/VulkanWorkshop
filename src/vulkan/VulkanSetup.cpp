@@ -3,9 +3,9 @@
 //
 
 #include "VulkanSetup.h"
+#include "ApplicationContext.h"
 #include <assert.h>
 #include <iostream>
-#include <malloc.h>
 
 using namespace std;
 
@@ -213,12 +213,6 @@ unsigned VulkanSetup::getSwapChainSize() {
     return 0;
 }
 
-Window::Window(int width, int height, const char *name) {
-    this->width = width;
-    this->height = height;
-    this->name = name;
-}
-
 // MS-Windows event handling function:
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     struct ApplicationContext *applicationContext = reinterpret_cast<struct ApplicationContext *>(
@@ -240,116 +234,3 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     return (DefWindowProc(hWnd, uMsg, wParam, lParam));
 }
 
-void Window::init(ApplicationContext *applicationContext) {
-    WNDCLASSEX win_class;
-
-    this->connection = GetModuleHandle(NULL);
-
-    win_class.cbSize = sizeof(WNDCLASSEX);
-    win_class.style = CS_HREDRAW | CS_VREDRAW;
-    win_class.lpfnWndProc = WndProc;
-    win_class.cbClsExtra = 0;
-    win_class.cbWndExtra = 0;
-    win_class.hInstance = this->connection; // hInstance
-    win_class.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-    win_class.hCursor = LoadCursor(NULL, IDC_ARROW);
-    win_class.hbrBackground = (HBRUSH) GetStockObject(WHITE_BRUSH);
-    win_class.lpszMenuName = NULL;
-    win_class.lpszClassName = this->name.data();
-    win_class.hIconSm = LoadIcon(NULL, IDI_WINLOGO);
-
-    if (!RegisterClassEx(&win_class)) {
-        // It didn't work, so try to give a useful error:
-        printf("Unexpected error trying to start the application!\n");
-        fflush(stdout);
-        exit(1);
-    }
-    // Create window with the registered class:
-    RECT wr = {0, 0, this->width, this->height};
-    AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW, FALSE);
-    this->window = CreateWindowEx(0,
-                                  this->name.data(),            // class name
-                                  this->name.data(),            // app name
-                                  WS_OVERLAPPEDWINDOW | // window style
-                                  WS_VISIBLE | WS_SYSMENU,
-                                  100, 100,           // x/y coords
-                                  wr.right - wr.left, // width
-                                  wr.bottom - wr.top, // height
-                                  NULL,               // handle to parent
-                                  NULL,               // handle to menu
-                                  this->connection,    // hInstance
-                                  NULL);              // no extra parameters
-    if (!this->window) {
-        // It didn't work, so try to give a useful error:
-        printf("Cannot create a window in which to draw!\n");
-        fflush(stdout);
-        exit(1);
-    }
-    SetWindowLongPtr(this->window, GWLP_USERDATA, (LONG_PTR) applicationContext);
-
-    this->createSurface(applicationContext);
-}
-
-void Window::createSurface(ApplicationContext *applicationContext) {
-    VkWin32SurfaceCreateInfoKHR createInfo = {};
-    createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-    createInfo.pNext = nullptr;
-    createInfo.hinstance = this->connection;
-    createInfo.hwnd = this->window;
-    VkResult surfaceCreateInfo_res = VK_RESULT_MAX_ENUM;
-    surfaceCreateInfo_res = vkCreateWin32SurfaceKHR(applicationContext->vulkanSetup.inst, &createInfo, NULL, &this->surface);
-    assert(surfaceCreateInfo_res == VK_SUCCESS);
-
-}
-
-void Window::checkQueueSupportPresenting(ApplicationContext *applicationContext) {
-    // Iterate over each queue to learn whether it supports presenting:
-    VkBool32 *pSupportsPresent =
-            (VkBool32 *) malloc(applicationContext->vulkanSetup.queue_family_count * sizeof(VkBool32));
-    for (uint32_t i = 0; i < applicationContext->vulkanSetup.queue_family_count; i++) {
-        vkGetPhysicalDeviceSurfaceSupportKHR(applicationContext->vulkanSetup.gpus[0], i, this->surface, &pSupportsPresent[i]);
-    }
-    for (uint32_t i = 0; i < applicationContext->vulkanSetup.queue_family_count; i++) {
-        if (pSupportsPresent[i] == VK_TRUE) {
-            applicationContext->vulkanSetup.present_queue_family_index = i;
-            break;
-        }
-    }
-    free(pSupportsPresent);
-
-
-}
-
-void ApplicationContext::wm_paint() {
-    if (this->counter == 1000) {
-        cout << "ApplicationContext::wm_paint" << endl;
-    } else {
-        this->counter = 0;
-    }
-}
-
-void ApplicationContext::init() {
-
-    this->vulkanSetup.init();
-
-    cout << "ApplicationName: " << vulkanSetup.app_info.pApplicationName << endl;
-    cout << "EngineName: " << vulkanSetup.app_info.pEngineName << endl;
-    cout << "Vulkan Initialised: " << std::boolalpha << vulkanSetup.isVulkanReady() << endl;
-    cout << "Number of Valid GPUs: " << vulkanSetup.countGPUs() << endl;
-    cout << "Device Name: " << vulkanSetup.physicalDeviceProperties.deviceName << endl;
-    cout << "Queues: " << vulkanSetup.queue_family_count << endl;
-    cout << "Queue selected: " << vulkanSetup.queue_info.queueFamilyIndex << endl;
-
-    cout << "Command Queue: " << vulkanSetup.cmd_pool_info.queueFamilyIndex << endl;
-    cout << "Command Queue flags: " << vulkanSetup.cmd_pool_info.flags << endl;
-
-    cout << "SwapChain: " << vulkanSetup.getSwapChainSize() << endl;
-
-    this->window.init(this);
-}
-
-ApplicationContext::ApplicationContext() :
-        vulkanSetup(APP_SHORT_NAME, ENGINE_SHORT_NAME),
-        window(1280, 720, APP_SHORT_NAME) {
-
-}

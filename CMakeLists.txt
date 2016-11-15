@@ -10,15 +10,11 @@ set(CMAKE_CXX_FLAGS
 
 set(SOURCE_FILES
         src/main.cpp
-        src/vulkan/VulkanSetup.cpp
-        src/vulkan/VulkanSetup.h
-        #  src/vulkan/sdk/util.hpp
-        #  src/vulkan/sdk/util.cpp
-        #  src/vulkan/sdk/util_init.hpp
-        #  src/vulkan/sdk/util_init.cpp
-
-        src/vulkan/sdk/sdkut.cpp
-        src/vulkan/sdk/sdkut.h)
+        src/vlk/vlk.h
+        src/vlk/VulkanContext.cpp src/vlk/VulkanContext.h
+        src/vlk/ApplicationContext.cpp src/vlk/ApplicationContext.h
+        src/vlk/Window.cpp src/vlk/Window.h
+        src/vlk/VulkanUtility.cpp src/vlk/VulkanUtility.h)
 
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -39,14 +35,19 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(VULKAN_SDK C:\\\\VulkanSDK\\\\1.0.30.0)
     set(VULKAN_INCLUDES ${VULKAN_SDK}\\Include)
+    SET(VULKAN_SAMPLES ${VULKAN_SDK}\\Samples\\utils)
     set(VULKAN_LIBRARIES "${VULKAN_SDK}\\\\Source\\\\lib\\\\vulkan-1.dll")
   #  message(FATAL_ERROR ${VULKAN_LIBRARIES})
 else ()
     message(FATAL_ERROR "Operating System ${CMAKE_SYSTEM_NAME} is not managed by this build software")
 endif ()
 
-include_directories(${VULKAN_INCLUDES} ${PLATFORM_INCLUDES})
+include_directories(${VULKAN_INCLUDES} ${PLATFORM_INCLUDES}${VULKAN_SAMPLES})
 
 link_libraries(${PLATFORM_LIBRARIES} ${VULKAN_LIBRARIES})
 
 add_executable(VulkanWorkshop ${SOURCE_FILES})
+
+SET( SAMPLE_FILES src/sample/15-draw_cube.cpp )
+
+add_executable(draw-cube ${SAMPLE_FILES})

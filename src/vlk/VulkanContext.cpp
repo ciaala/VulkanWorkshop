@@ -5,6 +5,7 @@
 #include "VulkanContext.h"
 #include <assert.h>
 #include <iostream>
+#include <malloc.h>
 
 using namespace std;
 namespace vlk {
@@ -14,11 +15,41 @@ namespace vlk {
 
     }
 
+    void VulkanContext::init() {
+
+        if (VK_SUCCESS != VulkanUtility::init_global_layer_properties(this->instanceLayerProperties)) {
+            cerr << "Unable to setup Vulkan !!!" << endl;
+            return;
+        }
+        VulkanUtility::init_instance_extension_names(this->instanceExtensionNames);
+        VulkanUtility::init_device_extension_names(this->deviceExtensionNames);
+
+        if (init_instance() == VK_SUCCESS) {
+            init_debug_callback();
+            init_enumerate_device();
+            get_queue_families();
+        } else {
+            cerr << "Instance not created" << endl;
+            exit(-1);
+        }
+    }
+
+    void VulkanContext::initWithWindow() {
+
+        selectGraphicPresenterQueue();
+        createVirtualDevice();
+        //createCommandPool();
+        //createCommandBuffer();
+        selectImageFormat();
+        selectSurfaceCapabilities();
+        setupSwapChainExtent(1024, 1024);
+        setupTransform();
+        create_swapChain();
+        createImage();
+    }
+
     VkResult VulkanContext::init_instance() {
-
-        /* VULKAN_KEY_START */
-
-        // initialize the VkApplicationInfo structure
+        // STEP 1
 
         app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
         app_info.pNext = NULL;
@@ -34,7 +65,6 @@ namespace vlk {
         enabledInstanceExtensions.push_back("VK_KHR_surface");
         enabledInstanceExtensions.push_back("VK_KHR_win32_surface");
         enabledInstanceExtensions.push_back("VK_EXT_debug_report");
-
 
 
         inst_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -61,7 +91,7 @@ namespace vlk {
     }
 
     void VulkanContext::init_debug_callback() {
-
+        // STEP 2
         this->pfnCreateDebugReportCallbackEXT = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(
                 vkGetInstanceProcAddr(this->inst, "vkCreateDebugReportCallbackEXT"));
         this->pfnDestroyDebugReportCallbackEXT = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(
@@ -80,42 +110,30 @@ namespace vlk {
         debugReportCreateInfo.pUserData = this;
         pfnCreateDebugReportCallbackEXT(this->inst, &this->debugReportCreateInfo, nullptr, &this->debugReportCallback);
     }
+/*
+    void VulkanContext::initExtensions() {
+        uint32_t instance_extension_count;
+        VkResult instanceExtension_res;
+        // char *layer_name = NULL;
 
-    void VulkanContext::init() {
-        if (VK_SUCCESS != VulkanUtility::init_global_layer_properties(this->instanceLayerProperties)) {
-            cerr << "Unable to setup Vulkan !!!" << endl;
-            return;
-        }
-        VulkanUtility::init_instance_extension_names(this->instanceExtensionNames);
-        VulkanUtility::init_device_extension_names(this->instanceExtensionNames);
+        //layer_name = properties.layerName;
 
-        if (init_instance() == VK_SUCCESS) {
-            init_debug_callback();
-            init_enumerate_device();
-        }
+        do {
+            instanceExtension_res = vkEnumerateInstanceExtensionProperties(
+                    properties.layerName, &instance_extension_count, NULL);
+            extensions.resize(instance_extension_count);
+            //instance_extensions = extensions.data();
+            instanceExtension_res = vkEnumerateInstanceExtensionProperties(
+                    properties.layerName, &instance_extension_count, extensions.data());
+        } while (instanceExtension_res == VK_INCOMPLETE);
 
-        if (1 == 3 && get_queue_families()) {
-            createVirtualDevice();
-            createCommandPool();
-            createCommandBuffer();
-//            createSwapChain();
-        } else {
-            cerr << "No queue found" << endl;
-        }
+        //struct sample_info info = {};
+//    init_global_layer_properties(info);
+        //VkExtensionProperties *instance_extensions;
+
 
     }
-
-
-    VulkanContext::~VulkanContext() {
-        this->destroyCommandBuffers();
-        this->destroyVirtualDevice();
-        vkDestroyInstance(inst, NULL);
-    }
-
-    bool VulkanContext::isVulkanReady() const {
-        return this->res == VK_SUCCESS;
-    }
-
+*/
     VkResult VulkanContext::init_enumerate_device() {
         uint32_t gpu_count = 0;
         this->enumerated_physical_device_res = vkEnumeratePhysicalDevices(this->inst, &gpu_count, NULL);
@@ -131,69 +149,10 @@ namespace vlk {
                                                      &this->queue_family_count, NULL);
             vkGetPhysicalDeviceMemoryProperties(this->gpus[0], &this->memory_properties);
             vkGetPhysicalDeviceProperties(this->gpus[0], &(this->physicalDeviceProperties));
+        } else {
+            cerr << "No GPU recognized";
         }
         return enumerateGPU_res;
-    }
-
-    bool VulkanContext::get_queue_families() {
-        bool found = false;
-
-        vkGetPhysicalDeviceQueueFamilyProperties(
-                this->gpus[0],
-                &this->queue_family_count,
-                nullptr);
-        assert(this->queue_family_count >= 0);
-        this->queue_properties.resize(this->queue_family_count);
-        vkGetPhysicalDeviceQueueFamilyProperties(
-                this->gpus[0],
-                &this->queue_family_count,
-                this->queue_properties.data());
-
-        for (unsigned int i = 0; i < this->queue_family_count; i++) {
-            if (this->queue_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-                this->queue_info.queueFamilyIndex = i;
-                found = true;
-                break;
-            }
-        }
-        assert(found);
-        assert(this->queue_family_count >= 1);
-        return found;
-    }
-
-    void VulkanContext::createVirtualDevice() {
-
-
-        this->queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        this->queue_info.pNext = NULL;
-        this->queue_info.queueCount = 1;
-        this->queue_info.pQueuePriorities = queue_priorities;
-
-
-        this->physical_device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        this->physical_device_info.pNext = NULL;
-        this->physical_device_info.queueCreateInfoCount = 1;
-        this->physical_device_info.pQueueCreateInfos = &queue_info;
-        this->physical_device_info.enabledExtensionCount = 0;
-        this->physical_device_info.ppEnabledExtensionNames = NULL;
-        this->physical_device_info.enabledLayerCount = 0;
-        this->physical_device_info.ppEnabledLayerNames = NULL;
-        this->physical_device_info.pEnabledFeatures = NULL;
-
-
-        this->createDevice_res = vkCreateDevice(this->gpus[0], &(this->physical_device_info), NULL, &(this->virtualDevice));
-        assert(createDevice_res == VK_SUCCESS);
-    }
-
-    void VulkanContext::destroyVirtualDevice() {
-        if (this->createDevice_res == VK_SUCCESS) {
-            cout << "VirtualDevice destroyed " << endl;
-            vkDestroyDevice(this->virtualDevice, NULL);
-        }
-    }
-
-    int VulkanContext::countGPUs() const {
-        return (int) this->gpus.size();
     }
 
     void VulkanContext::createCommandPool() {
@@ -219,6 +178,258 @@ namespace vlk {
         assert(command_buffer_res == VK_SUCCESS);
     }
 
+
+    bool VulkanContext::get_queue_families() {
+
+        bool found = false;
+
+        vkGetPhysicalDeviceQueueFamilyProperties(
+                this->gpus[0],
+                &this->queue_family_count,
+                nullptr);
+        assert(this->queue_family_count >= 0);
+        this->queue_properties.resize(this->queue_family_count);
+        vkGetPhysicalDeviceQueueFamilyProperties(
+                this->gpus[0],
+                &this->queue_family_count,
+                this->queue_properties.data());
+
+        for (unsigned int i = 0; i < this->queue_family_count; i++) {
+            if (this->queue_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+                this->queue_info.queueFamilyIndex = i;
+                found = true;
+                break;
+            }
+        }
+        assert(found);
+        assert(this->queue_family_count >= 1);
+        return found;
+    }
+
+    /**
+     * Identify the queues to be used
+     * GRAPHIC, PRESENT
+     * @return true if founds
+     */
+    void VulkanContext::selectGraphicPresenterQueue() {
+        //
+        // STEP 25
+        //
+        // Search for a graphics and a present queue in the array of queue
+        // families, try to find one that supports both
+        VkBool32 *pSupportsPresent =
+                (VkBool32 *) malloc(this->queue_properties.size() * sizeof(VkBool32));
+        for (uint32_t i = 0; i < this->queue_properties.size(); i++) {
+            vkGetPhysicalDeviceSurfaceSupportKHR(this->gpus[0], i, this->surfaceKHR,
+                                                 &pSupportsPresent[i]);
+        }
+        this->graphic_queue_family_index = UINT32_MAX;
+        this->present_queue_family_index = UINT32_MAX;
+        for (uint32_t i = 0; i < this->queue_properties.size(); ++i) {
+            if ((this->queue_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0) {
+                if (this->graphic_queue_family_index == UINT32_MAX)
+                    this->graphic_queue_family_index = i;
+
+                if (pSupportsPresent[i] == VK_TRUE) {
+                    this->graphic_queue_family_index = i;
+                    this->present_queue_family_index = i;
+                    break;
+                }
+            }
+        }
+        if (this->present_queue_family_index == UINT32_MAX) {
+            // If didn't find a queue that supports both graphics and present, then
+            // find a separate present queue.
+            for (size_t i = 0; i < this->queue_properties.size(); ++i)
+                if (pSupportsPresent[i] == VK_TRUE) {
+                    this->present_queue_family_index = (uint32_t) i;
+                    break;
+                }
+        }
+        free(pSupportsPresent);
+    }
+
+    void VulkanContext::createVirtualDevice() {
+        //
+        // STEP 26
+        //
+
+        this->queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        this->queue_info.flags = 0;
+        this->queue_info.pNext = NULL;
+        this->queue_info.queueCount = 1;
+        this->queue_info.pQueuePriorities = this->queue_priorities;
+        this->queue_info.queueFamilyIndex = this->graphic_queue_family_index;
+
+
+        this->physical_device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        this->physical_device_info.flags = 0;
+        this->physical_device_info.pNext = NULL;
+        this->physical_device_info.queueCreateInfoCount = 1;
+        this->physical_device_info.pQueueCreateInfos = &this->queue_info;
+        this->physical_device_info.enabledExtensionCount = (uint32_t) this->deviceExtensionNames.size();
+        this->physical_device_info.ppEnabledExtensionNames = this->deviceExtensionNames.size() > 0 ? this->deviceExtensionNames.data() : nullptr;
+        this->physical_device_info.enabledLayerCount = (uint32_t) this->enabledInstanceLayers.size();
+
+        this->physical_device_info.ppEnabledLayerNames =
+                this->enabledInstanceLayers.size() > 0 ? this->enabledInstanceLayers.data() : nullptr;
+
+        this->physical_device_info.pEnabledFeatures = NULL;
+
+
+        this->createDevice_res = vkCreateDevice(this->gpus[0], &(this->physical_device_info), NULL, &(this->virtualDevice));
+        assert(createDevice_res == VK_SUCCESS);
+    }
+
+    /**
+     *  Get the list of VkFormats that are supported:
+     */
+    void VulkanContext::selectImageFormat() {
+        // STEP 30
+
+        uint32_t formatCount;
+        VkResult res = vkGetPhysicalDeviceSurfaceFormatsKHR(this->gpus[0], this->surfaceKHR,
+                                                            &formatCount, NULL);
+        assert(res == VK_SUCCESS);
+        VkSurfaceFormatKHR *surfFormats =
+                (VkSurfaceFormatKHR *) malloc(formatCount * sizeof(VkSurfaceFormatKHR));
+        res = vkGetPhysicalDeviceSurfaceFormatsKHR(this->gpus[0], this->surfaceKHR,
+                                                   &formatCount, surfFormats);
+        assert(res == VK_SUCCESS);
+        // If the format list includes just one entry of VK_FORMAT_UNDEFINED,
+        // the surface has no preferred format.  Otherwise, at least one
+        // supported format will be returned.
+        if (formatCount == 1 && surfFormats[0].format == VK_FORMAT_UNDEFINED) {
+            this->imageFormat = VK_FORMAT_B8G8R8A8_UNORM;
+        } else {
+            assert(formatCount >= 1);
+            this->imageFormat = surfFormats[0].format;
+        }
+        free(surfFormats);
+    }
+
+    void VulkanContext::selectSurfaceCapabilities() {
+        // STEP 31
+        VkResult res = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(this->gpus[0], this->surfaceKHR,
+                                                                 &this->surfCapabilities);
+        assert(res == VK_SUCCESS);
+
+        uint32_t presentModeCount;
+        res = vkGetPhysicalDeviceSurfacePresentModesKHR(this->gpus[0], this->surfaceKHR,
+                                                        &presentModeCount, NULL);
+        assert(res == VK_SUCCESS);
+        VkPresentModeKHR *presentModes =
+                (VkPresentModeKHR *) malloc(presentModeCount * sizeof(VkPresentModeKHR));
+
+        res = vkGetPhysicalDeviceSurfacePresentModesKHR(
+                this->gpus[0], this->surfaceKHR, &presentModeCount, presentModes);
+        assert(res == VK_SUCCESS);
+    }
+
+    void VulkanContext::setupSwapChainExtent(int width, int height) {
+        //
+        // STEP 32
+        //
+
+        // width and height are either both 0xFFFFFFFF, or both not 0xFFFFFFFF.
+        if (surfCapabilities.currentExtent.width == 0xFFFFFFFF) {
+            // If the surface size is undefined, the size is set to
+            // the size of the images requested.
+            swapchainExtent.width = width;
+            swapchainExtent.height = height;
+            if (swapchainExtent.width < surfCapabilities.minImageExtent.width) {
+                swapchainExtent.width = surfCapabilities.minImageExtent.width;
+            } else if (swapchainExtent.width >
+                       surfCapabilities.maxImageExtent.width) {
+                swapchainExtent.width = surfCapabilities.maxImageExtent.width;
+            }
+
+            if (swapchainExtent.height < surfCapabilities.minImageExtent.height) {
+                swapchainExtent.height = surfCapabilities.minImageExtent.height;
+            } else if (swapchainExtent.height >
+                       surfCapabilities.maxImageExtent.height) {
+                swapchainExtent.height = surfCapabilities.maxImageExtent.height;
+            }
+        } else {
+            // If the surface size is defined, the swap chain size must match
+            swapchainExtent = surfCapabilities.currentExtent;
+        }
+        // Determine the number of VkImage's to use in the swap chain.
+        // We need to acquire only 1 presentable image at at time.
+        // Asking for minImageCount images ensures that we can acquire
+        // 1 presentable image as long as we present it before attempting
+        // to acquire another.
+        this->desiredNumberOfSwapChainImages = surfCapabilities.minImageCount;
+    }
+
+    void VulkanContext::setupTransform() {
+        //
+        // STEP 33
+        //
+
+
+
+        if (surfCapabilities.
+                supportedTransforms &
+            VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
+                ) {
+            preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+        } else {
+            preTransform = surfCapabilities.currentTransform;
+        }
+    }
+
+    void VulkanContext::create_swapChain() {
+        VkSwapchainCreateInfoKHR swapchain_ci;
+        VulkanUtility::init_swapchain_ci(
+                swapchain_ci, this->surfaceKHR, this->desiredNumberOfSwapChainImages,
+                this->imageFormat, this->swapchainExtent,
+                this->preTransform, this->swapchainPresentMode);
+
+        uint32_t queueFamilyIndices[2] = {
+                (uint32_t) this->graphic_queue_family_index,
+                (uint32_t) this->present_queue_family_index};
+        if (this->graphic_queue_family_index != this->present_queue_family_index) {
+            // If the graphics and present queues are from different queue families,
+            // we either have to explicitly transfer ownership of images between
+            // the queues, or we have to create the swapchain with imageSharingMode
+            // as VK_SHARING_MODE_CONCURRENT
+            swapchain_ci.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+            swapchain_ci.queueFamilyIndexCount = 2;
+            swapchain_ci.pQueueFamilyIndices = queueFamilyIndices;
+        }
+        this->swapChainCreation_res = vkCreateSwapchainKHR(this->virtualDevice, &swapchain_ci, NULL,
+                                                           &this->swapChain);
+        assert(res == VK_SUCCESS);
+
+
+    }
+
+    void VulkanContext::createImage() {
+        VkResult res = vkGetSwapchainImagesKHR(this->virtualDevice, this->swapChain,
+                                               &this->swapchainImageCount, NULL);
+        assert(res == VK_SUCCESS);
+
+        VkImage *swapchainImages =
+                (VkImage *) malloc(this->swapchainImageCount * sizeof(VkImage));
+        assert(swapchainImages);
+        res = vkGetSwapchainImagesKHR(this->virtualDevice, this->swapChain,
+                                      &this->swapchainImageCount, swapchainImages);
+        assert(res == VK_SUCCESS);
+        this->buffers.resize(this->swapchainImageCount);
+        for (uint32_t i = 0; i < this->swapchainImageCount; i++) {
+            this->buffers[i].image = swapchainImages[i];
+        }
+        free(swapchainImages);
+        for (uint32_t i = 0; i < this->swapchainImageCount; i++) {
+            VulkanUtility::create_image_info(
+                    this->virtualDevice, this->imageFormat, this->buffers[i]);
+        }
+    }
+
+    //
+    // DESTRUCTORS
+    //
     void VulkanContext::destroyCommandBuffers() {
 
         if (this->command_buffer_res == VK_SUCCESS) {
@@ -230,40 +441,51 @@ namespace vlk {
         }
     }
 
-
-    unsigned VulkanContext::getSwapChainSize() {
-        return 0;
-    }
-
-
-    void VulkanContext::initExtensions() {
-        uint32_t instance_extension_count;
-        VkResult instanceExtension_res;
-        // char *layer_name = NULL;
-
-        //layer_name = properties.layerName;
-
-        do {
-            instanceExtension_res = vkEnumerateInstanceExtensionProperties(
-                    properties.layerName, &instance_extension_count, NULL);
-            extensions.resize(instance_extension_count);
-            //instance_extensions = extensions.data();
-            instanceExtension_res = vkEnumerateInstanceExtensionProperties(
-                    properties.layerName, &instance_extension_count, extensions.data());
-        } while (instanceExtension_res == VK_INCOMPLETE);
-
-        //struct sample_info info = {};
-//    init_global_layer_properties(info);
-        //VkExtensionProperties *instance_extensions;
-
-
-    }
-
     void VulkanContext::destroy_debug_report() {
         this->pfnDestroyDebugReportCallbackEXT(this->inst, this->debugReportCallback, nullptr);
         debugReportCallback = VK_NULL_HANDLE;
     }
 
+    void VulkanContext::destroy_surfaceKHR() {
+        for (uint32_t i = 0; i < this->swapchainImageCount; i++) {
+            vkDestroyImageView(this->virtualDevice, this->buffers[i].view, nullptr);
+        }
+        vkDestroySwapchainKHR(this->virtualDevice, this->swapChain, nullptr);
+        vkDestroySurfaceKHR(this->inst, this->surfaceKHR, NULL);
+    }
+
+    void VulkanContext::destroyVirtualDevice() {
+        if (this->createDevice_res == VK_SUCCESS) {
+            cout << "VirtualDevice destroyed " << endl;
+            vkDestroyDevice(this->virtualDevice, NULL);
+        }
+    }
+
+    VulkanContext::~VulkanContext() {
+        this->destroyCommandBuffers();
+        this->destroy_surfaceKHR();
+        this->destroyVirtualDevice();
+        this->destroy_debug_report();
+
+        vkDestroyInstance(inst, NULL);
+    }
+
+    //
+    // GETTERS - SETTERS
+    //
+    unsigned VulkanContext::getSwapChainSize() {
+        return 0;
+    }
+
+    int VulkanContext::countGPUs() const {
+        return (int) this->gpus.size();
+    }
+
+    bool VulkanContext::isVulkanReady() const {
+        return this->res == VK_SUCCESS;
+    }
+
+    // CALLBACKS
 
     VkBool32 vlkDebugCallback(VkDebugReportFlagsEXT flags,
                               VkDebugReportObjectTypeEXT objType,
@@ -274,20 +496,18 @@ namespace vlk {
                               const char *msg,
                               void *userData) {
         if (flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT) {
-            std::cout << "[INFO | ";
+            std::cout << "[INFO        | ";
         } else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT) {
-            std::cout << "[WARNING | ";
+            std::cout << "[WARNING *** | ";
         } else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT) {
             std::cout << "[PERFORMANCE | ";
         } else if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) {
-            std::cout << "[ERROR | ";
+            std::cout << "[ERROR ***** | ";
         } else if (flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT) {
-            std::cout << "[DEBUG | ";
+            std::cout << "[DEBUG       | ";
         }
         std::cout << layerPrefix << "] ";
         std::cout << msg << std::endl;
         return false;
     }
-
-
 }

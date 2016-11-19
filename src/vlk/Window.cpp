@@ -99,7 +99,7 @@ namespace vlk {
         assert(surfaceCreateInfo_res == VK_SUCCESS);
         return surfaceCreateInfo_res;
     }
-
+/*
     void Window::checkQueueSupportPresenting(ApplicationContext *applicationContext) {
         // Iterate over each queue to learn whether it supports presenting:
         VkBool32 *pSupportsPresent =
@@ -117,6 +117,6 @@ namespace vlk {
 
 
     }
-
+*/
 
 }

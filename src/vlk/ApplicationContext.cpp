@@ -18,6 +18,8 @@ namespace vlk {
 
         this->vulkanContext.init();
 
+        this->window.init(this);
+        this->vulkanContext.initWithWindow();
         cout << "ApplicationName: " << vulkanContext.app_info.pApplicationName << endl;
         cout << "EngineName: " << vulkanContext.app_info.pEngineName << endl;
         cout << "Vulkan Initialised: " << std::boolalpha << vulkanContext.isVulkanReady() << endl;
@@ -32,8 +34,6 @@ namespace vlk {
         cout << "Command Queue flags: " << vulkanContext.cmd_pool_info.flags << endl;
 
         cout << "SwapChain: " << vulkanContext.getSwapChainSize() << endl;
-
-        this->window.init(this);
 
     }
 

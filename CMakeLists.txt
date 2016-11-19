@@ -42,12 +42,12 @@ else ()
     message(FATAL_ERROR "Operating System ${CMAKE_SYSTEM_NAME} is not managed by this build software")
 endif ()
 
-include_directories(${VULKAN_INCLUDES} ${PLATFORM_INCLUDES}${VULKAN_SAMPLES})
+include_directories(${VULKAN_INCLUDES} ${PLATFORM_INCLUDES} ${VULKAN_SAMPLES})
 
 link_libraries(${PLATFORM_LIBRARIES} ${VULKAN_LIBRARIES})
 
 add_executable(VulkanWorkshop ${SOURCE_FILES})
 
-SET( SAMPLE_FILES src/sample/15-draw_cube.cpp )
-
-add_executable(draw-cube ${SAMPLE_FILES})
+#SET( SAMPLE_FILES src/sample/15-draw_cube.cpp )
+#
+#add_executable(draw-cube ${SAMPLE_FILES})

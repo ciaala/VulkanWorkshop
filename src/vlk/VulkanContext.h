@@ -19,7 +19,7 @@ namespace vlk {
     class VulkanContext {
     public:
         /** struct  extensions */
-        vector<const char *> device_extension_names;
+        vector<const char *> deviceExtensionNames;
         vector<const char *> instanceExtensionNames;
 
         /** layer properties */
@@ -33,7 +33,8 @@ namespace vlk {
         VkDevice virtualDevice;
         VkResult enumerated_physical_device_res = VK_RESULT_MAX_ENUM;
         VkResult enumerateGPU_res = VK_RESULT_MAX_ENUM;
-        unsigned present_queue_family_index;
+        uint32_t present_queue_family_index;
+        uint32_t graphic_queue_family_index;
         /* }; */
 
         /* struct PhysicalDevice {*/
@@ -103,7 +104,7 @@ namespace vlk {
 
         VkResult init_instance();
 
-        void initExtensions();
+        //void initExtensions();
 
         void init_debug_callback();
 
@@ -114,6 +115,49 @@ namespace vlk {
 
         vector<const char*> enabledInstanceLayers;
         vector<const char*> enabledInstanceExtensions;
+
+        void destroy_surfaceKHR();
+
+        void create_swapChain();
+
+        VkResult swapChainCreation_res;
+        VkSwapchainKHR swapChain;
+
+        void search_for_graphic_presenter_queue();
+
+        VkSurfaceKHR surfaceKHR;
+
+        void createImage();
+
+        uint32_t swapchainImageCount;
+
+        std::vector<swap_chain_buffer> buffers;
+
+        VkFormat imageFormat;
+
+        void findImageFormat();
+
+        void selectImageFormat();
+
+        void selectSurfaceCapabilities();
+
+        VkSurfaceCapabilitiesKHR surfCapabilities;
+        VkExtent2D swapchainExtent;
+
+        // The FIFO present mode is guaranteed by the spec to be supported
+        VkPresentModeKHR swapchainPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+
+
+        void setupTransform();
+
+        void selectGraphicPresenterQueue();
+
+        void setupSwapChainExtent(int width, int height);
+
+        VkSurfaceTransformFlagBitsKHR preTransform;
+        uint32_t desiredNumberOfSwapChainImages;
+
+        void initWithWindow();
     };
 
     VkBool32 vlkDebugCallback(VkDebugReportFlagsEXT flags,

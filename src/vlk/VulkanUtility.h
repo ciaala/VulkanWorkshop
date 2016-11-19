@@ -7,17 +7,18 @@
 
 #include "vlk.h"
 #include <vector>
+
 using namespace std;
 namespace vlk {
     typedef struct {
         VkLayerProperties properties;
-        vector <VkExtensionProperties> extensions;
+        vector<VkExtensionProperties> extensions;
     } vlk_layer_properties;
 
 
     class VulkanUtility {
     public:
-        static VkResult init_global_layer_properties(vector <vlk_layer_properties> &instance_layer_properties);
+        static VkResult init_global_layer_properties(vector<vlk_layer_properties> &instance_layer_properties);
 
         static VkResult init_global_extension_properties(vlk_layer_properties &layer_props);
 
@@ -26,6 +27,20 @@ namespace vlk {
 
         static
         void init_device_extension_names(vector<const char *> &device_extension_names);
+
+        static
+        void init_swapchain_ci(VkSwapchainCreateInfoKHR &swapchain_ci,
+                               VkSurfaceKHR &surfaceKHR,
+                               uint32_t desiredNumberOfSwapChainImages,
+                               VkFormat &imageFormat,
+                               VkExtent2D &swapchainExtent,
+                               VkSurfaceTransformFlagBitsKHR &preTransform,
+                               VkPresentModeKHR &swapchainPresentMode);
+        static
+        void create_image_info(
+                VkDevice &virtualDevice,
+                VkFormat &format,
+                swap_chain_buffer &buffer);
     };
 }
 

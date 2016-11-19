@@ -13,6 +13,14 @@
 #define VK_NO_PROTOTYPES
 namespace vlk {
 
+    /*
+ * Keep each of our swap chain buffers' image, command buffer and view in one
+ * spot
+ */
+    typedef struct _swap_chain_buffers {
+        VkImage image;
+        VkImageView view;
+    } swap_chain_buffer;
 
     class ApplicationContext;
 

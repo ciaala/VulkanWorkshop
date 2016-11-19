@@ -7,7 +7,6 @@
 using namespace std;
 namespace vlk {
     void ApplicationContext::wm_paint() {
-        cout << "@" << endl << flush;
         if (this->counter == 1000) {
             cout << "ApplicationContext::wm_paint" << endl << flush;
             this->counter = 0;

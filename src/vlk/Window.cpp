@@ -13,7 +13,6 @@ namespace vlk {
 // MS-Windows event handling function:
     LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         struct ApplicationContext *applicationContext = reinterpret_cast<struct ApplicationContext *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
-        cout << "*" << uMsg << endl << flush;
         switch (uMsg) {
             case WM_DESTROY:
                 if (applicationContext != nullptr) {

@@ -13,13 +13,16 @@ namespace vlk {
 // MS-Windows event handling function:
     LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         struct ApplicationContext *applicationContext = reinterpret_cast<struct ApplicationContext *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
-        cout << "*" << endl << flush;
+        cout << "*" << uMsg << endl << flush;
         switch (uMsg) {
-            case WM_CLOSE:
+            case WM_DESTROY:
                 if (applicationContext != nullptr) {
                     PostQuitMessage(0);
                     applicationContext->quit();
                 }
+                break;
+            case WM_CLOSE:
+                DestroyWindow (hWnd);
                 break;
             case WM_PAINT:
                 if (applicationContext != nullptr) {
@@ -61,6 +64,7 @@ namespace vlk {
             cerr << "Unexpected error trying to start the application!" << endl << flush;
             exit(1);
         }
+
         wr.left = 0;
         wr.top = 0;
         wr.right = this->width;
@@ -79,10 +83,12 @@ namespace vlk {
                                       NULL,               // handle to menu
                                       this->connection,    // hInstance
                                       NULL);              // no extra parameters
+
         if (!this->window) {
             cerr << "Cannot create a window in which to draw!" << endl << flush ;
             exit(1);
         }
+        ShowWindow (window, SW_SHOWNORMAL);
         SetWindowLongPtr(this->window, GWLP_USERDATA, (LONG_PTR) applicationContext);
 
         if (this->init_surface(applicationContext)) {
@@ -93,7 +99,7 @@ namespace vlk {
     }
 
     VkResult Window::init_surface(ApplicationContext *applicationContext) {
-
+        cout << "STEP W002 "<< "initSurface" << endl << flush;
         VkWin32SurfaceCreateInfoKHR createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
         createInfo.pNext = nullptr;

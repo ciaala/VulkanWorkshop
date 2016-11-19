@@ -7,8 +7,9 @@
 using namespace std;
 namespace vlk {
     void ApplicationContext::wm_paint() {
+        cout << "@" << endl << flush;
         if (this->counter == 1000) {
-            cout << "ApplicationContext::wm_paint" << endl;
+            cout << "ApplicationContext::wm_paint" << endl << flush;
             this->counter = 0;
         } else {
             this->counter ++;
@@ -48,7 +49,15 @@ namespace vlk {
     void ApplicationContext::join() {
 
         while(this->isRunning) {
+            MSG msg;
 
+            while (GetMessage (&msg, NULL, 0, 0) > 0)
+            {
+                TranslateMessage (&msg);
+                DispatchMessage (&msg);
+                if (VK_ESCAPE == msg.wParam)
+                    break;
+            }
         }
     }
 

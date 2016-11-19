@@ -17,6 +17,9 @@ namespace vlk {
 
 
     class VulkanUtility {
+    private:
+        VulkanUtility();
+
     public:
         static VkResult init_global_layer_properties(vector<vlk_layer_properties> &instance_layer_properties);
 
@@ -36,11 +39,38 @@ namespace vlk {
                                VkExtent2D &swapchainExtent,
                                VkSurfaceTransformFlagBitsKHR &preTransform,
                                VkPresentModeKHR &swapchainPresentMode);
+
         static
         void create_image_info(
                 VkDevice &virtualDevice,
                 VkFormat &format,
                 swap_chain_buffer &buffer);
+
+        static
+        void createImageViewInfo(VkDevice &virtualDevice, VkImage &image, VkImageView &imageView);
+
+        static
+        bool
+        memory_type_from_properties(VkPhysicalDeviceMemoryProperties &memory_properties, uint32_t typeBits, VkFlags requirements_mask, uint32_t *typeIndex);
+
+        static
+        void setMemoryAllocation(VkDevice &virtualDevice, VkPhysicalDeviceMemoryProperties &memory_properties, VkImage &image, VkDeviceMemory &deviceMemory);
+
+        static
+        void depthBufferImage(VkPhysicalDevice &physicalDevice, VkDevice &virtualDevice, uint32_t width, uint32_t height, VkImage &image);
+
+        static
+        void createUniformBuffer(VkDevice &virtualDevice, uniform_data &uniformData, VkDeviceSize memorySize, VkMemoryRequirements &mem_reqs);
+
+        static
+        void mapMemory(VkDevice &virtualDevice, uniform_data &uniformData, VkDeviceSize memorySize, void *memory, VkMemoryRequirements &mem_reqs);
+
+        static
+        void setMemoryAllocation(VkDevice &virtualDevice, VkPhysicalDeviceMemoryProperties &memory_properties, uniform_data &uniformData,
+                                 VkMemoryRequirements &mem_reqs);
+
+        static
+        void createPipeline(VkDevice &virtualDevice, pipeline_info &pipelineInfo, const uint32_t NUM_DESCRIPTOR_SETS);
     };
 }
 

@@ -46,6 +46,9 @@ namespace vlk {
         setupTransform();
         create_swapChain();
         createImage();
+        createDepthBuffer();
+        createUniformBuffer();
+        createPipeline();
     }
 
     VkResult VulkanContext::init_instance() {
@@ -437,7 +440,6 @@ namespace vlk {
         //
         // STEP 35
         //
-
         cout << "- STEP#0035 " << "createImage" << endl;
 
         VkResult res = vkGetSwapchainImagesKHR(this->virtualDevice, this->swapChain,
@@ -461,9 +463,53 @@ namespace vlk {
         }
     }
 
+    void VulkanContext::createDepthBuffer() {
+        //
+        // STEP 36
+        //
+        cout << "- STEP#0036 " << "createDepthBuffer" << endl << flush;
+
+        VulkanUtility::depthBufferImage(this->gpus[0], this->virtualDevice, 1280, 720, this->depthBuffer.depthBufferImage);
+
+        VulkanUtility::setMemoryAllocation(this->virtualDevice, this->memory_properties, this->depthBuffer.depthBufferImage, this->depthBuffer.deviceMemory);
+
+        VulkanUtility::createImageViewInfo(this->virtualDevice, this->depthBuffer.depthBufferImage, this->depthBuffer.imageView);
+    }
+
+    void VulkanContext::createUniformBuffer() {
+        //
+        // STEP 37
+        //
+        cout << "- STEP#0037 " << "createUniformBuffer" << endl << flush;
+        VulkanUtility::createUniformBuffer(this->virtualDevice, this->uniformData, sizeof(myData), this->memoryRequirements);
+
+        VulkanUtility::setMemoryAllocation(this->virtualDevice, this->memory_properties, this->uniformData, this->memoryRequirements);
+        VulkanUtility::mapMemory(this->virtualDevice, this->uniformData, sizeof(myData), (void *) &myData, this->memoryRequirements);
+
+    }
+
+    void VulkanContext::createPipeline() {
+        //
+        // STEP 38
+        //
+        cout << "- STEP#0038 " << "createPipeline" << endl << flush;
+        VulkanUtility::createPipeline(this->virtualDevice, this->pipelineInfo, this->NUM_DESCRIPTOR_SET);
+    }
+
     //
     // DESTRUCTORS
     //
+    void VulkanContext::destroyPipeline() {
+        for (auto i = 0; i < this->pipelineInfo.descriptorLayoutList.size(); i++)
+            vkDestroyDescriptorSetLayout(this->virtualDevice, this->pipelineInfo.descriptorLayoutList[i], nullptr);
+        vkDestroyPipelineLayout(this->virtualDevice, this->pipelineInfo.pipelineLayout, nullptr);
+    }
+    void VulkanContext::destroyDepthBuffer() {
+        vkDestroyImageView(this->virtualDevice, this->depthBuffer.imageView, NULL);
+        vkDestroyImage(this->virtualDevice, this->depthBuffer.depthBufferImage, NULL);
+        vkFreeMemory(this->virtualDevice, this->depthBuffer.deviceMemory, NULL);
+    }
+
     void VulkanContext::destroyCommandBuffers() {
 
         if (this->command_buffer_res == VK_SUCCESS) {
@@ -495,7 +541,15 @@ namespace vlk {
         }
     }
 
+    void VulkanContext::destroyMemoryBuffer() {
+        vkDestroyBuffer(this->virtualDevice, this->uniformData.buf, NULL);
+        vkFreeMemory(this->virtualDevice, this->uniformData.mem, NULL);
+    }
+
     VulkanContext::~VulkanContext() {
+        this->destroyPipeline();
+        this->destroyDepthBuffer();
+        this->destroyMemoryBuffer();
         this->destroyCommandBuffers();
         this->destroy_surfaceKHR();
         this->destroyVirtualDevice();
@@ -529,6 +583,10 @@ namespace vlk {
                               const char *layerPrefix,
                               const char *msg,
                               void *userData) {
+
+        // TODO Select and use some logging libraries. Evaluate logging to a small service through some network
+        // TODO Identify way to add colors
+
         if (flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT) {
             std::cout << "[INFO        | ";
         } else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT) {
@@ -536,12 +594,18 @@ namespace vlk {
         } else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT) {
             std::cout << "[PERFORMANCE | ";
         } else if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) {
+            //std::cout << "\033[1;31mbold [ERROR ***** | ";
             std::cout << "[ERROR ***** | ";
         } else if (flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT) {
             std::cout << "[DEBUG       | ";
         }
         std::cout << layerPrefix << "] ";
-        std::cout << msg << std::endl;
+        std::cout << msg;
+        if (0 && (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)) {
+            std::cout << "\033[0m";
+        }
+        std::cout << std::endl;
         return false;
     }
 }
+

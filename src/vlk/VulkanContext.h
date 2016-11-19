@@ -18,6 +18,8 @@ namespace vlk {
 
     class VulkanContext {
     public:
+
+
         /** struct  extensions */
         vector<const char *> deviceExtensionNames;
         vector<const char *> instanceExtensionNames;
@@ -113,18 +115,18 @@ namespace vlk {
 
         void destroy_debug_report();
 
-        vector<const char*> enabledInstanceLayers;
-        vector<const char*> enabledInstanceExtensions;
+        vector<const char *> enabledInstanceLayers;
+        vector<const char *> enabledInstanceExtensions;
 
         void destroy_surfaceKHR();
 
         void create_swapChain();
+
         uint32_t queueFamilyIndices[2];
 
         VkResult swapChainCreation_res;
         VkSwapchainKHR swapChain;
 
-        void search_for_graphic_presenter_queue();
 
         VkSurfaceKHR surfaceKHR = nullptr;
 
@@ -136,7 +138,6 @@ namespace vlk {
 
         VkFormat imageFormat;
 
-        void findImageFormat();
 
         void selectImageFormat();
 
@@ -160,6 +161,36 @@ namespace vlk {
         VkSwapchainCreateInfoKHR swapchain_ci;
 
         void initWithWindow();
+
+        void createDepthBuffer();
+
+        void destroyMemoryBuffer();
+
+        void createUniformBuffer();
+
+        uniform_data uniformData;
+        
+        VkMemoryRequirements memoryRequirements;
+        struct {
+            uint32_t stuff;
+            uint32_t moreStuff;
+            uint32_t realStuff;
+        } myData;
+        struct {
+            VkImage depthBufferImage;
+            VkDeviceMemory deviceMemory;
+            VkImageView imageView;
+        } depthBuffer;
+
+        void destroyDepthBuffer();
+
+        void destroyPipeline();
+
+
+        pipeline_info pipelineInfo;
+        const int NUM_DESCRIPTOR_SET = 1;
+
+        void createPipeline();
     };
 
     VkBool32 vlkDebugCallback(VkDebugReportFlagsEXT flags,

@@ -4,14 +4,20 @@
 
 #include "ApplicationContext.h"
 #include <iostream>
+#include <ctime>
+
 using namespace std;
 namespace vlk {
     void ApplicationContext::wm_paint() {
-        if (this->counter == 1000) {
-            cout << "ApplicationContext::wm_paint" << endl << flush;
+        time_t current_time;
+        time(&current_time);
+        time_t delta = (current_time - this->lastMessageTime);
+        if (delta > 10 ) {
+            cout << "ApplicationContext::wm_paint fps: " << ((double)counter / (double)delta) << endl << flush;
+            this->lastMessageTime = current_time;
             this->counter = 0;
         } else {
-            this->counter ++;
+            this->counter++;
         }
     }
 
@@ -42,18 +48,17 @@ namespace vlk {
     ApplicationContext::ApplicationContext() :
             vulkanContext(APP_SHORT_NAME, ENGINE_SHORT_NAME),
             window(1280, 720, APP_SHORT_NAME) {
-
+        time(&lastMessageTime);
     }
 
     void ApplicationContext::join() {
 
-        while(this->isRunning) {
+        while (this->isRunning) {
             MSG msg;
 
-            while (GetMessage (&msg, NULL, 0, 0) > 0)
-            {
-                TranslateMessage (&msg);
-                DispatchMessage (&msg);
+            while (GetMessage(&msg, NULL, 0, 0) > 0) {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
                 if (VK_ESCAPE == msg.wParam)
                     break;
             }

@@ -30,6 +30,7 @@ namespace vlk {
         void quit();
 
         bool isRunning;
+        time_t lastMessageTime;
     };
 
 }

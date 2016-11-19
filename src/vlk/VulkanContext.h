@@ -119,13 +119,14 @@ namespace vlk {
         void destroy_surfaceKHR();
 
         void create_swapChain();
+        uint32_t queueFamilyIndices[2];
 
         VkResult swapChainCreation_res;
         VkSwapchainKHR swapChain;
 
         void search_for_graphic_presenter_queue();
 
-        VkSurfaceKHR surfaceKHR;
+        VkSurfaceKHR surfaceKHR = nullptr;
 
         void createImage();
 
@@ -156,6 +157,7 @@ namespace vlk {
 
         VkSurfaceTransformFlagBitsKHR preTransform;
         uint32_t desiredNumberOfSwapChainImages;
+        VkSwapchainCreateInfoKHR swapchain_ci;
 
         void initWithWindow();
     };

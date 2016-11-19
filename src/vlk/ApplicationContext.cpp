@@ -9,16 +9,18 @@ namespace vlk {
     void ApplicationContext::wm_paint() {
         if (this->counter == 1000) {
             cout << "ApplicationContext::wm_paint" << endl;
-        } else {
             this->counter = 0;
+        } else {
+            this->counter ++;
         }
     }
 
     void ApplicationContext::init() {
-
+        this->isRunning = true;
         this->vulkanContext.init();
 
         this->window.init(this);
+
         this->vulkanContext.initWithWindow();
         cout << "ApplicationName: " << vulkanContext.app_info.pApplicationName << endl;
         cout << "EngineName: " << vulkanContext.app_info.pEngineName << endl;
@@ -41,5 +43,16 @@ namespace vlk {
             vulkanContext(APP_SHORT_NAME, ENGINE_SHORT_NAME),
             window(1280, 720, APP_SHORT_NAME) {
 
+    }
+
+    void ApplicationContext::join() {
+
+        while(this->isRunning) {
+
+        }
+    }
+
+    void ApplicationContext::quit() {
+        this->isRunning = false;
     }
 }

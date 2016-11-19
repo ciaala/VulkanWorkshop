@@ -5,29 +5,32 @@
 //#include <rpc.h>
 #include <malloc.h>
 #include <assert.h>
+#include <iostream>
 #include "Window.h"
 
 namespace vlk {
 
 // MS-Windows event handling function:
     LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-        struct ApplicationContext *applicationContext = reinterpret_cast<struct ApplicationContext *>(
-                GetWindowLongPtr(hWnd, GWLP_USERDATA));
-
+        struct ApplicationContext *applicationContext = reinterpret_cast<struct ApplicationContext *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+        cout << "*" << endl << flush;
         switch (uMsg) {
             case WM_CLOSE:
-                PostQuitMessage(0);
+                if (applicationContext != nullptr) {
+                    PostQuitMessage(0);
+                    applicationContext->quit();
+                }
                 break;
             case WM_PAINT:
                 if (applicationContext != nullptr) {
                     applicationContext->wm_paint();
                 }
-                return 0;
-
-            default:
                 break;
+            default:
+                return (DefWindowProc(hWnd, uMsg, wParam, lParam));
+
         }
-        return (DefWindowProc(hWnd, uMsg, wParam, lParam));
+        return 0;
     }
 
     Window::Window(int width, int height, const char *name) {
@@ -37,7 +40,6 @@ namespace vlk {
     }
 
     void Window::init(ApplicationContext *applicationContext) {
-        WNDCLASSEX win_class;
 
         this->connection = GetModuleHandle(NULL);
 
@@ -56,19 +58,21 @@ namespace vlk {
 
         if (!RegisterClassEx(&win_class)) {
             // It didn't work, so try to give a useful error:
-            printf("Unexpected error trying to start the application!\n");
-            fflush(stdout);
+            cerr << "Unexpected error trying to start the application!" << endl << flush;
             exit(1);
         }
+        wr.left = 0;
+        wr.top = 0;
+        wr.right = this->width;
+        wr.bottom = this->height;
         // Create window with the registered class:
-        RECT wr = {0, 0, this->width, this->height};
         AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW, FALSE);
         this->window = CreateWindowEx(0,
                                       this->name.data(),            // class name
                                       this->name.data(),            // app name
                                       WS_OVERLAPPEDWINDOW | // window style
                                       WS_VISIBLE | WS_SYSMENU,
-                                      100, 100,           // x/y coords
+                                      384, 216,           // x/y coords
                                       wr.right - wr.left, // width
                                       wr.bottom - wr.top, // height
                                       NULL,               // handle to parent
@@ -76,26 +80,27 @@ namespace vlk {
                                       this->connection,    // hInstance
                                       NULL);              // no extra parameters
         if (!this->window) {
-            // It didn't work, so try to give a useful error:
-            printf("Cannot create a window in which to draw!\n");
-            fflush(stdout);
+            cerr << "Cannot create a window in which to draw!" << endl << flush ;
             exit(1);
         }
         SetWindowLongPtr(this->window, GWLP_USERDATA, (LONG_PTR) applicationContext);
 
-        if ( this->init_surface_extension(applicationContext) ) {
-
+        if (this->init_surface(applicationContext)) {
+            cerr << "Unable to setup the surface" << endl << flush;
+            exit(1);
         }
 //        this->checkQueueSupportPresenting(applicationContext);
     }
 
-    VkResult Window::init_surface_extension(ApplicationContext *applicationContext) {
+    VkResult Window::init_surface(ApplicationContext *applicationContext) {
+
         VkWin32SurfaceCreateInfoKHR createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
         createInfo.pNext = nullptr;
         createInfo.hinstance = this->connection;
         createInfo.hwnd = this->window;
-        VkResult surfaceCreateInfo_res = vkCreateWin32SurfaceKHR(applicationContext->vulkanContext.inst, &createInfo, NULL, &this->surface);
+        VkResult surfaceCreateInfo_res = vkCreateWin32SurfaceKHR(applicationContext->vulkanContext.inst, &createInfo, NULL,
+                                                                 &applicationContext->vulkanContext.surfaceKHR);
         assert(surfaceCreateInfo_res == VK_SUCCESS);
         return surfaceCreateInfo_res;
     }

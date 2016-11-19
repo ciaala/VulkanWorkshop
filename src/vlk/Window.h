@@ -19,6 +19,8 @@ namespace vlk {
         struct HINSTANCE__ *connection;
         /** window / surface / */
         VkSurfaceKHR surface;
+        WNDCLASSEX win_class;
+        RECT wr;
 
         Window(int width, int height, const char *name);
 
@@ -29,7 +31,7 @@ namespace vlk {
         int height;
         int width;
 
-        VkResult init_surface_extension(ApplicationContext *applicationContext);
+        VkResult init_surface(ApplicationContext *applicationContext);
 
         void checkQueueSupportPresenting(ApplicationContext *applicationContext);
     };

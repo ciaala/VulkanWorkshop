@@ -25,6 +25,11 @@ namespace vlk {
         void init();
 
 
+        void join();
+
+        void quit();
+
+        bool isRunning;
     };
 
 }

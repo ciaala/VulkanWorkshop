@@ -42,14 +42,17 @@ namespace vlk {
         //createCommandBuffer();
         selectImageFormat();
         selectSurfaceCapabilities();
-        setupSwapChainExtent(1024, 1024);
+        setupSwapChainExtent(1280, 720);
         setupTransform();
         create_swapChain();
         createImage();
     }
 
     VkResult VulkanContext::init_instance() {
+        //
         // STEP 1
+        //
+        cout << "- STEP#0001 " << "init_instance" << endl << flush;
 
         app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
         app_info.pNext = NULL;
@@ -91,7 +94,11 @@ namespace vlk {
     }
 
     void VulkanContext::init_debug_callback() {
+        //
         // STEP 2
+        //
+        cout << "- STEP#0002 " << "init_debug_callback" << endl << flush;
+
         this->pfnCreateDebugReportCallbackEXT = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(
                 vkGetInstanceProcAddr(this->inst, "vkCreateDebugReportCallbackEXT"));
         this->pfnDestroyDebugReportCallbackEXT = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(
@@ -110,6 +117,7 @@ namespace vlk {
         debugReportCreateInfo.pUserData = this;
         pfnCreateDebugReportCallbackEXT(this->inst, &this->debugReportCreateInfo, nullptr, &this->debugReportCallback);
     }
+
 /*
     void VulkanContext::initExtensions() {
         uint32_t instance_extension_count;
@@ -135,6 +143,12 @@ namespace vlk {
     }
 */
     VkResult VulkanContext::init_enumerate_device() {
+
+        //
+        // STEP 15
+        //
+        cout << "- STEP#0015 " << "init_enumerate_device" << endl << flush;
+
         uint32_t gpu_count = 0;
         this->enumerated_physical_device_res = vkEnumeratePhysicalDevices(this->inst, &gpu_count, NULL);
         assert(this->enumerated_physical_device_res == VK_SUCCESS);
@@ -217,6 +231,9 @@ namespace vlk {
         //
         // Search for a graphics and a present queue in the array of queue
         // families, try to find one that supports both
+        cout << "- STEP#0025 " << "selectGraphicPresenterQueue" << endl << flush;
+
+
         VkBool32 *pSupportsPresent =
                 (VkBool32 *) malloc(this->queue_properties.size() * sizeof(VkBool32));
         for (uint32_t i = 0; i < this->queue_properties.size(); i++) {
@@ -253,6 +270,7 @@ namespace vlk {
         //
         // STEP 26
         //
+        cout << "- STEP#0026 " << "createVirtualDevice" << endl << flush;
 
         this->queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         this->queue_info.flags = 0;
@@ -275,8 +293,6 @@ namespace vlk {
                 this->enabledInstanceLayers.size() > 0 ? this->enabledInstanceLayers.data() : nullptr;
 
         this->physical_device_info.pEnabledFeatures = NULL;
-
-
         this->createDevice_res = vkCreateDevice(this->gpus[0], &(this->physical_device_info), NULL, &(this->virtualDevice));
         assert(createDevice_res == VK_SUCCESS);
     }
@@ -285,7 +301,10 @@ namespace vlk {
      *  Get the list of VkFormats that are supported:
      */
     void VulkanContext::selectImageFormat() {
+        //
         // STEP 30
+        //
+        cout << "- STEP#0030 " << "selectImageFormat" << endl << flush;
 
         uint32_t formatCount;
         VkResult res = vkGetPhysicalDeviceSurfaceFormatsKHR(this->gpus[0], this->surfaceKHR,
@@ -309,7 +328,11 @@ namespace vlk {
     }
 
     void VulkanContext::selectSurfaceCapabilities() {
+        //
         // STEP 31
+        //
+        cout << "- STEP#0031 " << "selectSurfaceCapabilities" << endl << flush;
+
         VkResult res = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(this->gpus[0], this->surfaceKHR,
                                                                  &this->surfCapabilities);
         assert(res == VK_SUCCESS);
@@ -330,6 +353,7 @@ namespace vlk {
         //
         // STEP 32
         //
+        cout << "- STEP#0032 " << "setupSwapChainExtent" << endl << flush;
 
         // width and height are either both 0xFFFFFFFF, or both not 0xFFFFFFFF.
         if (surfCapabilities.currentExtent.width == 0xFFFFFFFF) {
@@ -366,12 +390,9 @@ namespace vlk {
         //
         // STEP 33
         //
+        cout << "- STEP#0033 " << "setupTransform" << endl;
 
-
-
-        if (surfCapabilities.
-                supportedTransforms &
-            VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
+        if (surfCapabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
                 ) {
             preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
         } else {
@@ -380,15 +401,22 @@ namespace vlk {
     }
 
     void VulkanContext::create_swapChain() {
-        VkSwapchainCreateInfoKHR swapchain_ci;
+        //
+        // STEP 34
+        //
+        cout << "- STEP#0034 " << "create_swapChain" << endl;
+
         VulkanUtility::init_swapchain_ci(
                 swapchain_ci, this->surfaceKHR, this->desiredNumberOfSwapChainImages,
                 this->imageFormat, this->swapchainExtent,
                 this->preTransform, this->swapchainPresentMode);
 
-        uint32_t queueFamilyIndices[2] = {
-                (uint32_t) this->graphic_queue_family_index,
-                (uint32_t) this->present_queue_family_index};
+        queueFamilyIndices[0] =
+                (uint32_t) this->graphic_queue_family_index;
+
+        queueFamilyIndices[1] =
+                (uint32_t) this->present_queue_family_index;
+
         if (this->graphic_queue_family_index != this->present_queue_family_index) {
             // If the graphics and present queues are from different queue families,
             // we either have to explicitly transfer ownership of images between
@@ -406,6 +434,12 @@ namespace vlk {
     }
 
     void VulkanContext::createImage() {
+        //
+        // STEP 35
+        //
+
+        cout << "- STEP#0035 " << "createImage" << endl;
+
         VkResult res = vkGetSwapchainImagesKHR(this->virtualDevice, this->swapChain,
                                                &this->swapchainImageCount, NULL);
         assert(res == VK_SUCCESS);

@@ -57,7 +57,7 @@ namespace vlk {
         void setMemoryAllocation(VkDevice &virtualDevice, VkPhysicalDeviceMemoryProperties &memory_properties, VkImage &image, VkDeviceMemory &deviceMemory);
 
         static
-        void depthBufferImage(VkPhysicalDevice &physicalDevice, VkDevice &virtualDevice, uint32_t width, uint32_t height, VkImage &image);
+        void depthBufferImage(VkPhysicalDevice &physicalDevice, VkDevice &virtualDevice, uint32_t width, uint32_t height, VkFormat &depthBufferFormat, VkImage &image, VkSampleCountFlagBits NUM_SAMPLES );
 
         static
         void createUniformBuffer(VkDevice &virtualDevice, uniform_data &uniformData, VkDeviceSize memorySize, VkMemoryRequirements &mem_reqs);
@@ -73,8 +73,30 @@ namespace vlk {
         void createPipeline(VkDevice &virtualDevice, pipeline_info &pipelineInfo, const uint32_t NUM_DESCRIPTOR_SETS);
 
         static
-        void createDescriptorSet(VkDevice &virtualDevice, )
+        void createDescriptorSet(
+                VkDevice &virtualDevice,
+                VkDescriptorPool &descriptorPool,
+                std::vector<VkDescriptorSet> &descriptorSetList,
+                const uint32_t NUM_DESCRIPTOR_SETS,
+                pipeline_info &pipelineInfo);
+
+        static
+        void set_image_layout(
+                VkCommandBuffer &cmd,
+                VkQueue &graphic_queue,
+                VkImage image,
+                VkImageAspectFlags aspectMask,
+                VkImageLayout old_image_layout,
+                VkImageLayout new_image_layout);
+
+        static
+        void createRenderPass(VkDevice &virtualDevice,
+                              vector<VkAttachmentDescription> &attachments,
+                              vector<VkAttachmentReference> &colorReferences,
+                              VkAttachmentReference &depthReference,
+                              VkSubpassDescription &subpass, VkRenderPass &renderPass);
     };
+
 }
 
 #endif //VULKANWORKSHOP_VULKANUTILITY_H

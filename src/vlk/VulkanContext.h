@@ -5,19 +5,21 @@
 #ifndef VULKANWORKSHOP_VULKANSETUP_H
 #define VULKANWORKSHOP_VULKANSETUP_H
 
-#include <vector>
-#include <string>
 #include "vlk.h"
+
+#include <string>
 #include "VulkanUtility.h"
 
 #define APP_SHORT_NAME "Terrific"
 #define ENGINE_SHORT_NAME "TerrificEngine"
 using namespace std;
+
 namespace vlk {
 
 
     class VulkanContext {
     public:
+        const VkSampleCountFlagBits NUM_SAMPLES = VK_SAMPLE_COUNT_1_BIT;
 
 
         /** struct  extensions */
@@ -69,6 +71,7 @@ namespace vlk {
         VkCommandPool cmd_pool;
         VkCommandPoolCreateInfo cmd_pool_info;
 
+        VkCommandBufferAllocateInfo commandBufferAllocateInfo;
 
         VkResult createDevice_res = VK_RESULT_MAX_ENUM;
         VkResult res = VK_RESULT_MAX_ENUM;
@@ -90,7 +93,6 @@ namespace vlk {
 
         // FIELDS
 
-        VkCommandBufferAllocateInfo cmd;
 
         void createCommandBuffer();
 
@@ -176,24 +178,39 @@ namespace vlk {
             uint32_t moreStuff;
             uint32_t realStuff;
         } myData;
-        struct {
-            VkImage depthBufferImage;
-            VkDeviceMemory deviceMemory;
-            VkImageView imageView;
-        } depthBuffer;
+        depth_buffer depthBuffer;
 
         void destroyDepthBuffer();
 
         void destroyPipeline();
 
-
         pipeline_info pipelineInfo;
-        const int NUM_DESCRIPTOR_SET = 1;
+        const uint32_t NUM_DESCRIPTOR_SET = 1;
 
         void createPipeline();
 
         void createDescriptorSet();
         void destroyDescriptorSet();
+
+        void updateDescriptorSet();
+
+        void initRenderPass();
+        vector<VkDescriptorSet> descriptorSetList;
+        VkDescriptorPool descriptorPool;
+
+        VkSemaphore imageAcquiredSemaphore;
+
+
+        void runRenderPass();
+
+        void acquireNextImage();
+
+        VkQueue graphicQueue;
+
+        void prepareAttachments(vector<VkAttachmentDescription> &attachments);
+
+        void destroyRenderPass();
+        VkRenderPass renderPass;
     };
 
     VkBool32 vlkDebugCallback(VkDebugReportFlagsEXT flags,
@@ -204,5 +221,6 @@ namespace vlk {
                               const char *layerPrefix,
                               const char *msg,
                               void *userData);
+
 }
 #endif //VULKANWORKSHOP_VULKANSETUP_H

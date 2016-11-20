@@ -9,6 +9,11 @@
 using namespace std;
 namespace vlk {
     void ApplicationContext::wm_paint() {
+        //
+        // TODO: Enable the runRenderPass
+        //
+        // vulkanContext.runRenderPass();
+
         time_t current_time;
         time(&current_time);
         time_t delta = (current_time - this->lastMessageTime);

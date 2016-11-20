@@ -212,15 +212,14 @@ namespace vlk {
         assert(res == VK_SUCCESS);
     }
 
-    void VulkanUtility::depthBufferImage(
-            VkPhysicalDevice &physicalDevice, VkDevice &virtualDevice,
-            uint32_t width, uint32_t height,
-            VkImage &image) {
+    void
+    VulkanUtility::depthBufferImage(VkPhysicalDevice &physicalDevice, VkDevice &virtualDevice, uint32_t width, uint32_t height, VkFormat &depthBufferFormat,
+                                    VkImage &image, VkSampleCountFlagBits NUM_SAMPLES) {
         VkImageCreateInfo image_info = {};
 
-        const VkFormat depth_format = VK_FORMAT_D16_UNORM;
+        depthBufferFormat = VK_FORMAT_D16_UNORM;
         VkFormatProperties props;
-        vkGetPhysicalDeviceFormatProperties(physicalDevice, depth_format, &props);
+        vkGetPhysicalDeviceFormatProperties(physicalDevice, depthBufferFormat, &props);
         if (props.linearTilingFeatures &
             VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
             image_info.tiling = VK_IMAGE_TILING_LINEAR;
@@ -326,6 +325,7 @@ namespace vlk {
                                         &(uniformData.mem));
         assert(res == VK_SUCCESS);
     }
+
     void VulkanUtility::createPipeline(
             VkDevice &virtualDevice,
             pipeline_info &pipelineInfo,
@@ -347,7 +347,7 @@ namespace vlk {
 
         pipelineInfo.descriptorLayoutList.resize(NUM_DESCRIPTOR_SETS);
         VkResult res = vkCreateDescriptorSetLayout(virtualDevice, &descriptor_layout, NULL,
-                                          pipelineInfo.descriptorLayoutList.data());
+                                                   pipelineInfo.descriptorLayoutList.data());
         assert(res == VK_SUCCESS);
 
         VkPipelineLayoutCreateInfo pPipelineLayoutCreateInfo = {};
@@ -362,5 +362,86 @@ namespace vlk {
         res = vkCreatePipelineLayout(virtualDevice, &pPipelineLayoutCreateInfo, NULL,
                                      &pipelineInfo.pipelineLayout);
         assert(res == VK_SUCCESS);
+    }
+
+    void VulkanUtility::createDescriptorSet(
+            VkDevice &virtualDevice,
+            VkDescriptorPool &descriptorPool,
+            std::vector<VkDescriptorSet> &descriptorSetList,
+            const uint32_t NUM_DESCRIPTOR_SETS,
+            pipeline_info &pipelineInfo) {
+        VkDescriptorPoolSize type_count[1];
+        type_count[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        type_count[0].descriptorCount = 1;
+
+        VkDescriptorPoolCreateInfo descriptor_pool = {};
+        descriptor_pool.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        descriptor_pool.pNext = NULL;
+        descriptor_pool.maxSets = 1;
+        descriptor_pool.poolSizeCount = 1;
+        descriptor_pool.pPoolSizes = type_count;
+
+        VkResult res = vkCreateDescriptorPool(virtualDevice, &descriptor_pool, NULL,
+                                              &descriptorPool);
+        assert(res == VK_SUCCESS);
+
+        VkDescriptorSetAllocateInfo alloc_info[1];
+        alloc_info[0].sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        alloc_info[0].pNext = NULL;
+        alloc_info[0].descriptorPool = descriptorPool;
+        alloc_info[0].descriptorSetCount = (uint32_t) pipelineInfo.descriptorLayoutList.size();
+        alloc_info[0].pSetLayouts = pipelineInfo.descriptorLayoutList.size() > 0 ? pipelineInfo.descriptorLayoutList.data() : nullptr;
+
+        descriptorSetList.resize(NUM_DESCRIPTOR_SETS);
+        res = vkAllocateDescriptorSets(virtualDevice, alloc_info, descriptorSetList.data());
+        assert(res == VK_SUCCESS);
+
+    }
+
+    void
+    VulkanUtility::set_image_layout(
+            VkCommandBuffer &cmd,
+            VkQueue &graphic_queue,
+            VkImage image,
+            VkImageAspectFlags aspectMask,
+            VkImageLayout old_image_layout,
+            VkImageLayout new_image_layout) {
+
+    }
+
+
+    void VulkanUtility::createRenderPass(
+            VkDevice &virtualDevice,
+            vector<VkAttachmentDescription> &attachments,
+            vector<VkAttachmentReference> &colorReferences,
+            VkAttachmentReference &depthReference,
+            VkSubpassDescription &subpass,
+            VkRenderPass &renderPass) {
+
+        subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        subpass.flags = 0;
+        subpass.inputAttachmentCount = 0;
+        subpass.pInputAttachments = NULL;
+        subpass.colorAttachmentCount = (uint32_t) colorReferences.size();
+        subpass.pColorAttachments = colorReferences.size() > 0 ? colorReferences.data() : nullptr;
+        subpass.pResolveAttachments = NULL;
+        subpass.pDepthStencilAttachment = &depthReference;
+        subpass.preserveAttachmentCount = 0;
+        subpass.pPreserveAttachments = NULL;
+
+
+        VkRenderPassCreateInfo rp_info = {};
+        rp_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+        rp_info.pNext = NULL;
+        rp_info.attachmentCount = (uint32_t) attachments.size();
+        rp_info.pAttachments = (attachments.size() > 0) ? attachments.data() : nullptr;
+        rp_info.subpassCount = 1;
+        rp_info.pSubpasses = &subpass;
+        rp_info.dependencyCount = 0;
+        rp_info.pDependencies = NULL;
+
+        VkResult res = vkCreateRenderPass(virtualDevice, &rp_info, NULL, &renderPass);
+        assert(res == VK_SUCCESS);
+
     }
 }

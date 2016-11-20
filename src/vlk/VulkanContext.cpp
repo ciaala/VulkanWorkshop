@@ -38,8 +38,8 @@ namespace vlk {
 
         selectGraphicPresenterQueue();
         createVirtualDevice();
-        //createCommandPool();
-        //createCommandBuffer();
+        createCommandPool();
+        createCommandBuffer();
         selectImageFormat();
         selectSurfaceCapabilities();
         setupSwapChainExtent(1280, 720);
@@ -49,6 +49,8 @@ namespace vlk {
         createDepthBuffer();
         createUniformBuffer();
         createPipeline();
+        createDescriptorSet();
+        runRenderPass();
     }
 
     VkResult VulkanContext::init_instance() {
@@ -173,8 +175,10 @@ namespace vlk {
     }
 
     void VulkanContext::createCommandPool() {
-
-
+        //
+        // STEP 16
+        //
+        cout << "- STEP#0016" << "createCommandPool" << endl << flush;
         this->cmd_pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         this->cmd_pool_info.pNext = NULL;
         this->cmd_pool_info.queueFamilyIndex = this->queue_info.queueFamilyIndex;
@@ -185,13 +189,17 @@ namespace vlk {
     }
 
     void VulkanContext::createCommandBuffer() {
-        this->cmd.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        this->cmd.pNext = NULL;
-        this->cmd.commandPool = this->cmd_pool;
-        this->cmd.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        this->cmd.commandBufferCount = 1;
+        //
+        // STEP 17
+        //
+        cout << "- STEP#0017" << "createCommandBuffer" << endl << flush;
+        this->commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        this->commandBufferAllocateInfo.pNext = NULL;
+        this->commandBufferAllocateInfo.commandPool = this->cmd_pool;
+        this->commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        this->commandBufferAllocateInfo.commandBufferCount = 1;
 
-        this->command_buffer_res = vkAllocateCommandBuffers(this->virtualDevice, &this->cmd, &this->commandBuffer);
+        this->command_buffer_res = vkAllocateCommandBuffers(this->virtualDevice, &this->commandBufferAllocateInfo, &this->commandBuffer);
         assert(command_buffer_res == VK_SUCCESS);
     }
 
@@ -469,7 +477,7 @@ namespace vlk {
         //
         cout << "- STEP#0036 " << "createDepthBuffer" << endl << flush;
 
-        VulkanUtility::depthBufferImage(this->gpus[0], this->virtualDevice, 1280, 720, this->depthBuffer.depthBufferImage);
+        VulkanUtility::depthBufferImage(this->gpus[0], this->virtualDevice, 1280, 720,  this->depthBuffer.format,this->depthBuffer.depthBufferImage, NUM_SAMPLES);
 
         VulkanUtility::setMemoryAllocation(this->virtualDevice, this->memory_properties, this->depthBuffer.depthBufferImage, this->depthBuffer.deviceMemory);
 
@@ -496,17 +504,150 @@ namespace vlk {
         VulkanUtility::createPipeline(this->virtualDevice, this->pipelineInfo, this->NUM_DESCRIPTOR_SET);
     }
 
+    void VulkanContext::createDescriptorSet() {
+        //
+        // STEP 39
+        //
+        cout << "- STEP#0039 " << "createDescriptorSet" << endl << flush;
+        VulkanUtility::createDescriptorSet(this->virtualDevice, this->descriptorPool, this->descriptorSetList, this->NUM_DESCRIPTOR_SET, this->pipelineInfo);
+    }
+
+    void VulkanContext::updateDescriptorSet() {
+        //
+        // STEP 100
+        //
+        cout << "- STEP#0100 " << "updateDescriptorSet" << endl << flush;
+        VkWriteDescriptorSet writes[1];
+
+        writes[0] = {};
+        writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writes[0].pNext = NULL;
+        writes[0].dstSet = this->descriptorSetList[0];
+        writes[0].descriptorCount = 1;
+        writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        writes[0].pBufferInfo = &this->uniformData.buffer_info;
+        writes[0].dstArrayElement = 0;
+        writes[0].dstBinding = 0;
+
+        vkUpdateDescriptorSets(this->virtualDevice, 1, writes, 0, NULL);
+    }
+
+
+    void VulkanContext::acquireNextImage() {
+        VkSemaphoreCreateInfo imageAcquiredSemaphoreCreateInfo;
+        imageAcquiredSemaphoreCreateInfo.sType =
+                VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+        imageAcquiredSemaphoreCreateInfo.pNext = NULL;
+        imageAcquiredSemaphoreCreateInfo.flags = 0;
+
+        VkResult res = vkCreateSemaphore(this->virtualDevice, &imageAcquiredSemaphoreCreateInfo,
+                                         NULL, &imageAcquiredSemaphore);
+        assert(res == VK_SUCCESS);
+        // Get the index of the next available swapchain image:
+        uint32_t currentBuffer = 0;
+        res = vkAcquireNextImageKHR(this->virtualDevice, this->swapChain, UINT64_MAX,
+                                    imageAcquiredSemaphore, VK_NULL_HANDLE,
+                                    &currentBuffer);
+
+        // TODO: Deal with the VK_SUBOPTIMAL_KHR and VK_ERROR_OUT_OF_DATE_KHR
+        // return codes
+        assert(res == VK_SUCCESS);
+        VulkanUtility::set_image_layout(
+                this->commandBuffer,
+                this->graphicQueue,
+                buffers[currentBuffer].image,
+                VK_IMAGE_ASPECT_COLOR_BIT,
+                VK_IMAGE_LAYOUT_UNDEFINED,
+                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    }
+
+    void VulkanContext::runRenderPass() {
+        cout << "[runRenderPass]" << endl << flush;
+        VkResult res;
+        VkCommandBufferBeginInfo cmd_buf_info = {};
+        cmd_buf_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        cmd_buf_info.pNext = NULL;
+        cmd_buf_info.flags = 0;
+        cmd_buf_info.pInheritanceInfo = NULL;
+
+        res = vkBeginCommandBuffer(this->commandBuffer, &cmd_buf_info);
+        assert(res == VK_SUCCESS);
+
+        VkSubpassDescription subPass;
+        vector<VkAttachmentDescription> attachmentDescriptions;
+        vector<VkAttachmentReference> imageReferences;
+
+        VkAttachmentReference imageReference = {};
+        imageReference.attachment = 0;
+        imageReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        imageReferences.push_back(imageReference);
+
+        VkAttachmentReference depthReference = {};
+        depthReference.attachment = 1;
+        depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+        this->acquireNextImage();
+
+        this->prepareAttachments(attachmentDescriptions);
+
+        VulkanUtility::createRenderPass(
+                this->virtualDevice,
+                attachmentDescriptions,
+                imageReferences,
+                depthReference,
+                subPass,
+                renderPass
+        );
+
+        res = vkEndCommandBuffer(this->commandBuffer);
+        assert(res == VK_SUCCESS);
+    }
+
+    void VulkanContext::prepareAttachments(vector<VkAttachmentDescription> &attachments) {
+
+        attachments.push_back(VkAttachmentDescription());
+        attachments.push_back(VkAttachmentDescription());
+        attachments[0].format = this->imageFormat;
+        attachments[0].samples = NUM_SAMPLES;
+        attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        attachments[0].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        attachments[0].flags = 0;
+
+        attachments[1].format = this->depthBuffer.format;
+        attachments[1].samples = NUM_SAMPLES;
+        attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        attachments[1].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        attachments[1].flags = 0;
+
+
+    }
+
     //
     // DESTRUCTORS
     //
-    void VulkanContext::destroyDescriptorSet() {
-
+    void VulkanContext::destroyRenderPass() {
+        vkDestroyRenderPass(this->virtualDevice, this->renderPass, NULL);
+        vkDestroySemaphore(this->virtualDevice, this->imageAcquiredSemaphore, NULL);
     }
+
+    void VulkanContext::destroyDescriptorSet() {
+        vkDestroyDescriptorPool(virtualDevice, descriptorPool, NULL);
+    }
+
     void VulkanContext::destroyPipeline() {
         for (auto i = 0; i < this->pipelineInfo.descriptorLayoutList.size(); i++)
             vkDestroyDescriptorSetLayout(this->virtualDevice, this->pipelineInfo.descriptorLayoutList[i], nullptr);
         vkDestroyPipelineLayout(this->virtualDevice, this->pipelineInfo.pipelineLayout, nullptr);
     }
+
     void VulkanContext::destroyDepthBuffer() {
         vkDestroyImageView(this->virtualDevice, this->depthBuffer.imageView, NULL);
         vkDestroyImage(this->virtualDevice, this->depthBuffer.depthBufferImage, NULL);
@@ -550,6 +691,8 @@ namespace vlk {
     }
 
     VulkanContext::~VulkanContext() {
+        this->destroyRenderPass();
+        this->destroyDescriptorSet();
         this->destroyPipeline();
         this->destroyDepthBuffer();
         this->destroyMemoryBuffer();

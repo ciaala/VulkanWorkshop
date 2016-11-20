@@ -12,11 +12,17 @@
 #ifndef VULKANWORKSHOP_VLK_H
 #define VULKANWORKSHOP_VLK_H
 #define VK_NO_PROTOTYPES
-#define NUM_SAMPLES VK_SAMPLE_COUNT_1_BIT
 
 namespace vlk {
 
-   typedef struct _uniform_data {
+    typedef struct _depth_buffer {
+        VkImage depthBufferImage;
+        VkDeviceMemory deviceMemory;
+        VkImageView imageView;
+        VkFormat format;
+    } depth_buffer;
+
+    typedef struct _uniform_data {
         VkBuffer buf;
         VkDeviceMemory mem;
         VkDescriptorBufferInfo buffer_info;

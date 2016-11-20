@@ -169,7 +169,7 @@ namespace vlk {
         void createUniformBuffer();
 
         uniform_data uniformData;
-        
+
         VkMemoryRequirements memoryRequirements;
         struct {
             uint32_t stuff;
@@ -191,6 +191,9 @@ namespace vlk {
         const int NUM_DESCRIPTOR_SET = 1;
 
         void createPipeline();
+
+        void createDescriptorSet();
+        void destroyDescriptorSet();
     };
 
     VkBool32 vlkDebugCallback(VkDebugReportFlagsEXT flags,

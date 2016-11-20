@@ -71,6 +71,9 @@ namespace vlk {
 
         static
         void createPipeline(VkDevice &virtualDevice, pipeline_info &pipelineInfo, const uint32_t NUM_DESCRIPTOR_SETS);
+
+        static
+        void createDescriptorSet(VkDevice &virtualDevice, )
     };
 }
 

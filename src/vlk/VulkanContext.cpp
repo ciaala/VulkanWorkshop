@@ -499,6 +499,9 @@ namespace vlk {
     //
     // DESTRUCTORS
     //
+    void VulkanContext::destroyDescriptorSet() {
+
+    }
     void VulkanContext::destroyPipeline() {
         for (auto i = 0; i < this->pipelineInfo.descriptorLayoutList.size(); i++)
             vkDestroyDescriptorSetLayout(this->virtualDevice, this->pipelineInfo.descriptorLayoutList[i], nullptr);

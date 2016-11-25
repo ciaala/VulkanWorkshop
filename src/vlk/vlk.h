@@ -4,15 +4,21 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 
 
+
 #include <vector>
 #include "vulkan/vulkan.h"
 #include "vulkan/vk_platform.h"
 
-
 #ifndef VULKANWORKSHOP_VLK_H
 #define VULKANWORKSHOP_VLK_H
-#define VK_NO_PROTOTYPES
 
+#define VK_NO_PROTOTYPES
+#define _GLIBCXX_USE_C99_DYNAMIC 1
+
+
+
+
+using namespace std;
 namespace vlk {
 
     typedef struct _depth_buffer {

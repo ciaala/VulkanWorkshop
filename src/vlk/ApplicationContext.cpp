@@ -51,7 +51,7 @@ namespace vlk {
     }
 
     ApplicationContext::ApplicationContext() :
-            vulkanContext(APP_SHORT_NAME, ENGINE_SHORT_NAME),
+            vulkanContext(APP_SHORT_NAME, ENGINE_SHORT_NAME, 1280, 720),
             window(1280, 720, APP_SHORT_NAME) {
         time(&lastMessageTime);
     }

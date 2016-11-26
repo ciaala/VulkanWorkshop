@@ -48,9 +48,7 @@ This is the sequence of steps required to setup Vulkan window
         - requires
             - swap chain info
         - set
-            - swap buffers
-        
- 
+            - swap buffers 
 - create images
     - requires
         - device
@@ -58,4 +56,23 @@ This is the sequence of steps required to setup Vulkan window
         - (?bitmap) image
     - set
         - image x buffer
+   
+- render pass 10
+    - sequence of images 
+- Shaders 11
+    -   GSLS to SPIRV
     
+- Framebuffer 12
+    - from
+        - Swapchain
+            - color buffers (image view)
+        - Depth Buffer (image view)
+    - create attachments
+        - color_0
+        - depth_0
+        - color_1
+        - depth_1
+    - framebuffer
+        - 1 color
+        - 1 depth
+    - Rendering of framebuffer

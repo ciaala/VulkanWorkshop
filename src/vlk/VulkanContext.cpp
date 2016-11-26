@@ -9,11 +9,13 @@
 
 using namespace std;
 namespace vlk {
-    VulkanContext::VulkanContext(const char *application_name, const char *engine_name) {
-        this->application_name = application_name;
-        this->engine_name = engine_name;
-
-    }
+    VulkanContext::VulkanContext(
+            const char *application_name,
+            const char *engine_name,
+            const uint32_t width,
+            const uint32_t height
+    ) : application_name(application_name), engine_name(engine_name), windowWidth(width), windowHeight(height){
+       }
 
     void VulkanContext::init() {
 
@@ -34,6 +36,7 @@ namespace vlk {
         }
     }
 
+
     void VulkanContext::initWithWindow() {
 
         selectGraphicPresenterQueue();
@@ -42,7 +45,7 @@ namespace vlk {
         createCommandBuffer();
         selectImageFormat();
         selectSurfaceCapabilities();
-        setupSwapChainExtent(1280, 720);
+        setupSwapChainExtent(windowWidth, windowHeight);
         setupTransform();
         create_swapChain();
         createImage();
@@ -50,6 +53,7 @@ namespace vlk {
         createUniformBuffer();
         createPipeline();
         createDescriptorSet();
+        prepareFramebuffers();
         runRenderPass();
     }
 
@@ -477,7 +481,7 @@ namespace vlk {
         //
         cout << "- STEP#0036 " << "createDepthBuffer" << endl << flush;
 
-        VulkanUtility::depthBufferImage(this->gpus[0], this->virtualDevice, 1280, 720,  this->depthBuffer.format,this->depthBuffer.depthBufferImage, NUM_SAMPLES);
+        VulkanUtility::depthBufferImage(this->gpus[0], this->virtualDevice, windowWidth, windowHeight, this->depthBuffer.format, this->depthBuffer.depthBufferImage, NUM_SAMPLES);
 
         VulkanUtility::setMemoryAllocation(this->virtualDevice, this->memory_properties, this->depthBuffer.depthBufferImage, this->depthBuffer.deviceMemory);
 
@@ -603,39 +607,65 @@ namespace vlk {
         assert(res == VK_SUCCESS);
     }
 
-    void VulkanContext::prepareAttachments(vector<VkAttachmentDescription> &attachments) {
+    void VulkanContext::prepareAttachments(vector<VkAttachmentDescription> &attachmentDescriptions) {
 
-        attachments.push_back(VkAttachmentDescription());
-        attachments.push_back(VkAttachmentDescription());
-        attachments[0].format = this->imageFormat;
-        attachments[0].samples = NUM_SAMPLES;
-        attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        attachments[0].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-        attachments[0].flags = 0;
+        attachmentDescriptions.push_back(VkAttachmentDescription());
+        attachmentDescriptions.push_back(VkAttachmentDescription());
+        attachmentDescriptions[0].format = this->imageFormat;
+        attachmentDescriptions[0].samples = NUM_SAMPLES;
+        attachmentDescriptions[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        attachmentDescriptions[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        attachmentDescriptions[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        attachmentDescriptions[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        attachmentDescriptions[0].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        attachmentDescriptions[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        attachmentDescriptions[0].flags = 0;
 
-        attachments[1].format = this->depthBuffer.format;
-        attachments[1].samples = NUM_SAMPLES;
-        attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        attachments[1].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-        attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-        attachments[1].flags = 0;
+        attachmentDescriptions[1].format = this->depthBuffer.format;
+        attachmentDescriptions[1].samples = NUM_SAMPLES;
+        attachmentDescriptions[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        attachmentDescriptions[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        attachmentDescriptions[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        attachmentDescriptions[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        attachmentDescriptions[1].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        attachmentDescriptions[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        attachmentDescriptions[1].flags = 0;
 
 
     }
 
+    void VulkanContext::prepareFramebuffers() {
+        attachments.reserve(2);
+        VkFramebufferCreateInfo fb_info = {};
+        fb_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        fb_info.pNext = NULL;
+        fb_info.renderPass = this->renderPass;
+        fb_info.attachmentCount = 2;
+        fb_info.pAttachments = attachments.data();
+        fb_info.width = windowWidth;
+        fb_info.height = windowHeight;
+        fb_info.layers = 1;
+
+        for (uint32_t i = 0; i < this->swapchainImageCount; i++) {
+            attachments[0] = this->buffers[i].view;
+            VkResult res = vkCreateFramebuffer(this->virtualDevice, &fb_info, NULL,
+                                      &this->framebuffers[i]);
+            assert(res == VK_SUCCESS);
+        }
+    }
     //
     // DESTRUCTORS
     //
     void VulkanContext::destroyRenderPass() {
         vkDestroyRenderPass(this->virtualDevice, this->renderPass, NULL);
         vkDestroySemaphore(this->virtualDevice, this->imageAcquiredSemaphore, NULL);
+    }
+
+    void VulkanContext::destroyFramebuffers() {
+        for (uint32_t i = 0; i < this->swapchainImageCount; i++) {
+            vkDestroyFramebuffer(this->virtualDevice, this->framebuffers[i], NULL);
+        }
+        this->framebuffers;
     }
 
     void VulkanContext::destroyDescriptorSet() {
@@ -691,7 +721,9 @@ namespace vlk {
     }
 
     VulkanContext::~VulkanContext() {
+
         this->destroyRenderPass();
+        this->destroyFramebuffers();
         this->destroyDescriptorSet();
         this->destroyPipeline();
         this->destroyDepthBuffer();

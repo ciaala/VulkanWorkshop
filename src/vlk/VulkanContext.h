@@ -60,7 +60,10 @@ namespace vlk {
 
         bool isVulkanReady() const;
 
-        VulkanContext(const char *applicationName, const char *engineName);
+        VulkanContext(const char *applicationName,
+                      const char *engineName,
+                      const uint32_t width,
+                      const uint32_t height);
 
         ~VulkanContext();
 
@@ -190,11 +193,13 @@ namespace vlk {
         void createPipeline();
 
         void createDescriptorSet();
+
         void destroyDescriptorSet();
 
         void updateDescriptorSet();
 
         void initRenderPass();
+
         vector<VkDescriptorSet> descriptorSetList;
         VkDescriptorPool descriptorPool;
 
@@ -207,10 +212,18 @@ namespace vlk {
 
         VkQueue graphicQueue;
 
-        void prepareAttachments(vector<VkAttachmentDescription> &attachments);
-
-        void destroyRenderPass();
+        void prepareAttachments(vector<VkAttachmentDescription> &attachmentDescriptions);
         VkRenderPass renderPass;
+        void destroyRenderPass();
+
+        void destroyFramebuffers();
+        vector<VkFramebuffer> framebuffers;
+
+        void prepareFramebuffers();
+        const uint32_t windowWidth;
+        vector<VkImageView> attachments;
+        const uint32_t windowHeight;
+
     };
 
     VkBool32 vlkDebugCallback(VkDebugReportFlagsEXT flags,

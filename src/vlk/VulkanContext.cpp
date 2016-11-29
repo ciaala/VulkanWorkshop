@@ -53,8 +53,11 @@ namespace vlk {
         createUniformBuffer();
         createPipeline();
         createDescriptorSet();
-        prepareFramebuffers();
+        beginCommandBuffer();
+        initRenderPass();
         runRenderPass();
+        initFramebuffers();
+
     }
 
     VkResult VulkanContext::init_instance() {
@@ -538,6 +541,10 @@ namespace vlk {
 
 
     void VulkanContext::acquireNextImage() {
+        //
+        // STEP 101
+        //
+        cout << "- STEP#0101 " << "acquireNextImage" << endl << flush;
         VkSemaphoreCreateInfo imageAcquiredSemaphoreCreateInfo;
         imageAcquiredSemaphoreCreateInfo.sType =
                 VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -564,9 +571,13 @@ namespace vlk {
                 VK_IMAGE_LAYOUT_UNDEFINED,
                 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     }
+    void VulkanContext::beginCommandBuffer(){
+        //
+        // STEP 102
+        /* DEPENDS on init_command_buffer() */
+        //
+        cout << "- STEP#0102 " << "beginCommandBuffer" << endl << flush;
 
-    void VulkanContext::runRenderPass() {
-        cout << "[runRenderPass]" << endl << flush;
         VkResult res;
         VkCommandBufferBeginInfo cmd_buf_info = {};
         cmd_buf_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -576,6 +587,17 @@ namespace vlk {
 
         res = vkBeginCommandBuffer(this->commandBuffer, &cmd_buf_info);
         assert(res == VK_SUCCESS);
+
+    }
+    void VulkanContext::initRenderPass() {
+
+    }
+
+    void VulkanContext::runRenderPass() {
+        //
+        // STEP 102
+        //
+        cout << "- STEP#0103 " << "runRenderPass" << endl << flush;
 
         VkSubpassDescription subPass;
         vector<VkAttachmentDescription> attachmentDescriptions;
@@ -603,11 +625,17 @@ namespace vlk {
                 renderPass
         );
 
+
+
         res = vkEndCommandBuffer(this->commandBuffer);
         assert(res == VK_SUCCESS);
     }
 
     void VulkanContext::prepareAttachments(vector<VkAttachmentDescription> &attachmentDescriptions) {
+        //
+        // STEP 103
+        //
+        cout << "- STEP#0104 " << "prepareAttachments" << endl << flush;
 
         attachmentDescriptions.push_back(VkAttachmentDescription());
         attachmentDescriptions.push_back(VkAttachmentDescription());
@@ -634,14 +662,22 @@ namespace vlk {
 
     }
 
-    void VulkanContext::prepareFramebuffers() {
-        attachments.reserve(2);
+    void VulkanContext::initFramebuffers() {
+        //
+        // STEP 40
+        //
+        cout << "- STEP#0040 " << "initFramebuffers" << endl << flush;
+
+        std::vector<VkImageView> attachments;
+        attachments.resize(2);
+        attachments[1] = this->depthBuffer.imageView;
+        framebuffers.reserve(this->swapchainImageCount);
         VkFramebufferCreateInfo fb_info = {};
         fb_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         fb_info.pNext = NULL;
         fb_info.renderPass = this->renderPass;
-        fb_info.attachmentCount = 2;
-        fb_info.pAttachments = attachments.data();
+        fb_info.attachmentCount = (uint32_t) attachments.size();
+        fb_info.pAttachments = attachments.size() > 0 ? attachments.data() : nullptr;
         fb_info.width = windowWidth;
         fb_info.height = windowHeight;
         fb_info.layers = 1;
@@ -750,6 +786,7 @@ namespace vlk {
     bool VulkanContext::isVulkanReady() const {
         return this->res == VK_SUCCESS;
     }
+
 
     // CALLBACKS
 

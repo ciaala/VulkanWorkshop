@@ -219,10 +219,13 @@ namespace vlk {
         void destroyFramebuffers();
         vector<VkFramebuffer> framebuffers;
 
-        void prepareFramebuffers();
+        void initFramebuffers();
         const uint32_t windowWidth;
-        vector<VkImageView> attachments;
+        //vector<VkImageView> attachments;
         const uint32_t windowHeight;
+
+        void beginCommandBuffer();
+
 
     };
 

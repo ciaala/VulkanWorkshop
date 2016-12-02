@@ -9,6 +9,8 @@
 namespace vlk {
     VkResult VulkanUtility::init_global_layer_properties(
             vector<vlk_layer_properties> &instance_layer_properties) {
+        cout << "VulkanUtility::init_global_layer_properties" << endl;
+
         uint32_t instance_layer_count;
         VkLayerProperties *vk_props = NULL;
         VkResult res;
@@ -43,6 +45,7 @@ namespace vlk {
 
     VkResult VulkanUtility::init_global_extension_properties(
             vlk_layer_properties &layer_props) {
+        cout << "VulkanUtility::init_global_extension_properties" << endl;
         VkExtensionProperties *instance_extensions;
         uint32_t instance_extension_count;
         VkResult res;
@@ -72,19 +75,22 @@ namespace vlk {
 
     void VulkanUtility::init_instance_extension_names(
             vector<const char *> &instance_extension_names) {
-
+        cout << "VulkanUtility::init_instance_extension_names" << endl;
         instance_extension_names.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
         instance_extension_names.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
     }
 
     void VulkanUtility::init_device_extension_names(
             vector<const char *> &device_extension_names) {
+        cout << "VulkanUtility::init_device_extension_names" << endl;
         device_extension_names.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
     }
 
     void VulkanUtility::createImageViewInfo(
             VkDevice &virtualDevice, VkImage &image,
             VkImageView &imageView) {
+        cout << "VulkanUtility::createImageViewInfo" << endl;
+
         const VkFormat depth_format = VK_FORMAT_D16_UNORM;
 
         VkImageViewCreateInfo view_info = {};
@@ -116,6 +122,7 @@ namespace vlk {
                                           VkExtent2D &swapchainExtent,
                                           VkSurfaceTransformFlagBitsKHR &preTransform,
                                           VkPresentModeKHR &swapchainPresentMode) {
+        cout << "VulkanUtility::init_swapchain_ci" << endl;
 
         swapchain_ci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         swapchain_ci.pNext = NULL;
@@ -144,6 +151,8 @@ namespace vlk {
             uint32_t typeBits,
             VkFlags requirements_mask,
             uint32_t *typeIndex) {
+        cout << "VulkanUtility::memory_type_from_properties" << endl;
+
         // Search memtypes to find first index with those properties
         for (uint32_t i = 0; i < memory_properties.memoryTypeCount; i++) {
             if ((typeBits & 1) == 1) {
@@ -166,6 +175,7 @@ namespace vlk {
             VkDeviceSize memorySize,
             void *memory,
             VkMemoryRequirements &mem_reqs) {
+        cout << "VulkanUtility::mapMemory" << endl;
 
         uint8_t *pData;
         VkResult res = vkMapMemory(virtualDevice, uniformData.mem, 0, mem_reqs.size, 0, (void **) &pData);
@@ -187,6 +197,7 @@ namespace vlk {
             VkDevice &virtualDevice,
             VkFormat &format,
             swap_chain_buffer &buffer) {
+        cout << "VulkanUtility::create_image_info" << endl;
 
         VkResult res;
         VkImageViewCreateInfo color_image_view = {};
@@ -215,6 +226,8 @@ namespace vlk {
     void
     VulkanUtility::depthBufferImage(VkPhysicalDevice &physicalDevice, VkDevice &virtualDevice, uint32_t width, uint32_t height, VkFormat &depthBufferFormat,
                                     VkImage &image, VkSampleCountFlagBits NUM_SAMPLES) {
+        cout << "VulkanUtility::depthBufferImage" << endl;
+
         VkImageCreateInfo image_info = {};
 
         depthBufferFormat = VK_FORMAT_D16_UNORM;
@@ -257,6 +270,7 @@ namespace vlk {
             VkPhysicalDeviceMemoryProperties &memory_properties,
             VkImage &image,
             VkDeviceMemory &deviceMemory) {
+        cout << "VulkanUtility::setMemoryAllocation" << endl;
 
         VkMemoryRequirements mem_reqs;
 
@@ -288,6 +302,8 @@ namespace vlk {
             uniform_data &uniformData,
             VkDeviceSize memorySize,
             VkMemoryRequirements &mem_reqs) {
+        cout << "VulkanUtility::createUniformBuffer" << endl;
+
         VkBufferCreateInfo buf_info = {};
         buf_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         buf_info.pNext = NULL;
@@ -308,6 +324,8 @@ namespace vlk {
             VkPhysicalDeviceMemoryProperties &memory_properties,
             uniform_data &uniformData,
             VkMemoryRequirements &mem_reqs) {
+        cout << "VulkanUtility::setMemoryAllocation" << endl;
+
         VkMemoryAllocateInfo alloc_info = {};
         alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         alloc_info.pNext = NULL;
@@ -331,6 +349,7 @@ namespace vlk {
             pipeline_info &pipelineInfo,
             const uint32_t NUM_DESCRIPTOR_SETS
     ) {
+        cout << "VulkanUtility::createPipeline" << endl;
         VkDescriptorSetLayoutBinding layout_binding = {};
         layout_binding.binding = 0;
         layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -370,6 +389,7 @@ namespace vlk {
             std::vector<VkDescriptorSet> &descriptorSetList,
             const uint32_t NUM_DESCRIPTOR_SETS,
             pipeline_info &pipelineInfo) {
+        cout << "VulkanUtility::createDescriptorSet" << endl;
         VkDescriptorPoolSize type_count[1];
         type_count[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         type_count[0].descriptorCount = 1;
@@ -400,13 +420,73 @@ namespace vlk {
 
     void
     VulkanUtility::set_image_layout(
-            VkCommandBuffer &cmd,
-            VkQueue &graphic_queue,
-            VkImage image,
+            VkCommandBuffer &commandBuffer,
+            VkImage &image,
             VkImageAspectFlags aspectMask,
             VkImageLayout old_image_layout,
             VkImageLayout new_image_layout) {
+        cout << "VulkanUtility::set_image_layout !!!!" << endl;
 
+        /* DEPENDS on info.cmd and info.queue initialized */
+
+        assert(commandBuffer != VK_NULL_HANDLE);
+
+        VkImageMemoryBarrier image_memory_barrier = {};
+        image_memory_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        image_memory_barrier.pNext = NULL;
+        image_memory_barrier.srcAccessMask = 0;
+        image_memory_barrier.dstAccessMask = 0;
+        image_memory_barrier.oldLayout = old_image_layout;
+        image_memory_barrier.newLayout = new_image_layout;
+        image_memory_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        image_memory_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        image_memory_barrier.image = image;
+        image_memory_barrier.subresourceRange.aspectMask = aspectMask;
+        image_memory_barrier.subresourceRange.baseMipLevel = 0;
+        image_memory_barrier.subresourceRange.levelCount = 1;
+        image_memory_barrier.subresourceRange.baseArrayLayer = 0;
+        image_memory_barrier.subresourceRange.layerCount = 1;
+
+        if (old_image_layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
+            image_memory_barrier.srcAccessMask =
+                    VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        }
+
+        if (new_image_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+            image_memory_barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        }
+
+        if (new_image_layout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) {
+            image_memory_barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+        }
+
+        if (old_image_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+            image_memory_barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        }
+
+        if (old_image_layout == VK_IMAGE_LAYOUT_PREINITIALIZED) {
+            image_memory_barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+        }
+
+        if (new_image_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+            image_memory_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        }
+
+        if (new_image_layout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
+            image_memory_barrier.dstAccessMask =
+                    VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        }
+
+        if (new_image_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+            image_memory_barrier.dstAccessMask =
+                    VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        }
+
+        VkPipelineStageFlags src_stages = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        VkPipelineStageFlags dest_stages = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+
+        vkCmdPipelineBarrier(commandBuffer, src_stages, dest_stages, 0, 0, NULL, 0, NULL,
+                             1, &image_memory_barrier);
     }
 
 
@@ -417,6 +497,7 @@ namespace vlk {
             VkAttachmentReference &depthReference,
             VkSubpassDescription &subpass,
             VkRenderPass &renderPass) {
+        cout << "VulkanUtility::createRenderPass" << endl;
 
         subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
         subpass.flags = 0;
@@ -444,4 +525,31 @@ namespace vlk {
         assert(res == VK_SUCCESS);
 
     }
+
+    void VulkanUtility::createRenderPassBeginInfo(
+            VkRenderPass &renderPass,
+            VkCommandBuffer &commandBuffer,
+            VkFramebuffer &frameBuffer,
+            vector<VkClearValue> clear_values,
+            uint32_t windowWidth,
+            uint32_t windowHeight
+
+    ) {
+        cout << "VulkanUtility::createRenderPassBeginInfo" << endl;
+
+        VkRenderPassBeginInfo renderPassBeginInfo = {};
+        renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassBeginInfo.pNext = nullptr;
+        renderPassBeginInfo.renderPass = renderPass;
+        renderPassBeginInfo.framebuffer = frameBuffer;
+        renderPassBeginInfo.renderArea.offset.x = 0;
+        renderPassBeginInfo.renderArea.offset.y = 0;
+        renderPassBeginInfo.renderArea.extent.width = windowWidth;
+        renderPassBeginInfo.renderArea.extent.height = windowHeight;
+        renderPassBeginInfo.clearValueCount = (uint32_t) clear_values.size();
+        renderPassBeginInfo.pClearValues = clear_values.size() > 0 ? clear_values.data() : nullptr;
+
+        vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    }
+
 }

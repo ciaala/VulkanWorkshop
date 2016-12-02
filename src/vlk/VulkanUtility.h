@@ -57,7 +57,8 @@ namespace vlk {
         void setMemoryAllocation(VkDevice &virtualDevice, VkPhysicalDeviceMemoryProperties &memory_properties, VkImage &image, VkDeviceMemory &deviceMemory);
 
         static
-        void depthBufferImage(VkPhysicalDevice &physicalDevice, VkDevice &virtualDevice, uint32_t width, uint32_t height, VkFormat &depthBufferFormat, VkImage &image, VkSampleCountFlagBits NUM_SAMPLES );
+        void depthBufferImage(VkPhysicalDevice &physicalDevice, VkDevice &virtualDevice, uint32_t width, uint32_t height, VkFormat &depthBufferFormat,
+                              VkImage &image, VkSampleCountFlagBits NUM_SAMPLES);
 
         static
         void createUniformBuffer(VkDevice &virtualDevice, uniform_data &uniformData, VkDeviceSize memorySize, VkMemoryRequirements &mem_reqs);
@@ -81,20 +82,26 @@ namespace vlk {
                 pipeline_info &pipelineInfo);
 
         static
-        void set_image_layout(
-                VkCommandBuffer &cmd,
-                VkQueue &graphic_queue,
-                VkImage image,
-                VkImageAspectFlags aspectMask,
-                VkImageLayout old_image_layout,
-                VkImageLayout new_image_layout);
-
-        static
         void createRenderPass(VkDevice &virtualDevice,
                               vector<VkAttachmentDescription> &attachments,
                               vector<VkAttachmentReference> &colorReferences,
                               VkAttachmentReference &depthReference,
                               VkSubpassDescription &subpass, VkRenderPass &renderPass);
+
+        static
+        void createRenderPassBeginInfo(VkRenderPass &renderPass,
+                                       VkCommandBuffer &commandBuffer,
+                                       VkFramebuffer &frameBuffer,
+                                       vector<VkClearValue> clear_values,
+                                       uint32_t windowWidth,
+                                       uint32_t windowHeight);
+
+        static
+        void set_image_layout(VkCommandBuffer &commandBuffer,
+                              VkImage &image,
+                              VkImageAspectFlags aspectMask,
+                              VkImageLayout old_image_layout,
+                              VkImageLayout new_image_layout);
     };
 
 }

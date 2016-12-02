@@ -139,7 +139,8 @@ namespace vlk {
 
         uint32_t swapchainImageCount;
 
-        std::vector<swap_chain_buffer> buffers;
+        vector<swap_chain_buffer> buffers;
+        uint32_t currentBuffer = 0;
 
         VkFormat imageFormat;
 
@@ -216,10 +217,10 @@ namespace vlk {
         VkRenderPass renderPass;
         void destroyRenderPass();
 
-        void destroyFramebuffers();
-        vector<VkFramebuffer> framebuffers;
+        void destroyFrameBuffers();
+        vector<VkFramebuffer> frameBuffers;
 
-        void initFramebuffers();
+        void initFrameBuffers();
         const uint32_t windowWidth;
         //vector<VkImageView> attachments;
         const uint32_t windowHeight;
@@ -227,6 +228,11 @@ namespace vlk {
         void beginCommandBuffer();
 
 
+        void initVertexBuffers();
+
+        vertex_buffer cubeVertexBuffer;
+
+        void destroyVertexBuffers();
     };
 
     VkBool32 vlkDebugCallback(VkDebugReportFlagsEXT flags,

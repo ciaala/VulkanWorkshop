@@ -3,9 +3,11 @@
 //
 
 #include "VulkanContext.h"
-#include <assert.h>
+#include "VulkanBufferUtility.h"
+#include <cassert>
 #include <iostream>
 #include <malloc.h>
+#include "cube_data.h"
 
 using namespace std;
 namespace vlk {
@@ -14,8 +16,8 @@ namespace vlk {
             const char *engine_name,
             const uint32_t width,
             const uint32_t height
-    ) : application_name(application_name), engine_name(engine_name), windowWidth(width), windowHeight(height){
-       }
+    ) : application_name(application_name), engine_name(engine_name), windowWidth(width), windowHeight(height) {
+    }
 
     void VulkanContext::init() {
 
@@ -56,7 +58,8 @@ namespace vlk {
         beginCommandBuffer();
         initRenderPass();
         runRenderPass();
-        initFramebuffers();
+        initFrameBuffers();
+        initVertexBuffers();
 
     }
 
@@ -67,7 +70,7 @@ namespace vlk {
         cout << "- STEP#0001 " << "init_instance" << endl << flush;
 
         app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        app_info.pNext = NULL;
+        app_info.pNext = nullptr;
         app_info.pApplicationName = APP_SHORT_NAME;
         app_info.applicationVersion = 1;
         app_info.pEngineName = ENGINE_SHORT_NAME;
@@ -83,7 +86,7 @@ namespace vlk {
 
 
         inst_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        inst_info.pNext = NULL;
+        inst_info.pNext = nullptr;
         inst_info.flags = 0;
         inst_info.pApplicationInfo = &app_info;
         inst_info.enabledExtensionCount = static_cast<uint32_t>(this->enabledInstanceExtensions.size());
@@ -92,7 +95,7 @@ namespace vlk {
         inst_info.ppEnabledLayerNames = this->enabledInstanceLayers.data();
 
 
-        res = vkCreateInstance(&inst_info, NULL, &inst);
+        res = vkCreateInstance(&inst_info, nullptr, &inst);
         if (res == VK_ERROR_INCOMPATIBLE_DRIVER) {
             std::cout << "cannot find a compatible Vulkan ICD" << endl;
             exit(-1);
@@ -134,13 +137,13 @@ namespace vlk {
     void VulkanContext::initExtensions() {
         uint32_t instance_extension_count;
         VkResult instanceExtension_res;
-        // char *layer_name = NULL;
+        // char *layer_name = nullptr;
 
         //layer_name = properties.layerName;
 
         do {
             instanceExtension_res = vkEnumerateInstanceExtensionProperties(
-                    properties.layerName, &instance_extension_count, NULL);
+                    properties.layerName, &instance_extension_count, nullptr);
             extensions.resize(instance_extension_count);
             //instance_extensions = extensions.data();
             instanceExtension_res = vkEnumerateInstanceExtensionProperties(
@@ -162,7 +165,7 @@ namespace vlk {
         cout << "- STEP#0015 " << "init_enumerate_device" << endl << flush;
 
         uint32_t gpu_count = 0;
-        this->enumerated_physical_device_res = vkEnumeratePhysicalDevices(this->inst, &gpu_count, NULL);
+        this->enumerated_physical_device_res = vkEnumeratePhysicalDevices(this->inst, &gpu_count, nullptr);
         assert(this->enumerated_physical_device_res == VK_SUCCESS);
         this->gpus.resize(gpu_count);
 
@@ -172,7 +175,7 @@ namespace vlk {
 
         if (this->gpus.size() > 0) {
             vkGetPhysicalDeviceQueueFamilyProperties(this->gpus[0],
-                                                     &this->queue_family_count, NULL);
+                                                     &this->queue_family_count, nullptr);
             vkGetPhysicalDeviceMemoryProperties(this->gpus[0], &this->memory_properties);
             vkGetPhysicalDeviceProperties(this->gpus[0], &(this->physicalDeviceProperties));
         } else {
@@ -185,13 +188,13 @@ namespace vlk {
         //
         // STEP 16
         //
-        cout << "- STEP#0016" << "createCommandPool" << endl << flush;
+        cout << "- STEP#0016 " << "createCommandPool" << endl << flush;
         this->cmd_pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-        this->cmd_pool_info.pNext = NULL;
+        this->cmd_pool_info.pNext = nullptr;
         this->cmd_pool_info.queueFamilyIndex = this->queue_info.queueFamilyIndex;
         this->cmd_pool_info.flags = 0;
 
-        this->command_pool_res = vkCreateCommandPool(this->virtualDevice, &this->cmd_pool_info, NULL, &this->cmd_pool);
+        this->command_pool_res = vkCreateCommandPool(this->virtualDevice, &this->cmd_pool_info, nullptr, &this->cmd_pool);
         assert(command_pool_res == VK_SUCCESS);
     }
 
@@ -199,9 +202,9 @@ namespace vlk {
         //
         // STEP 17
         //
-        cout << "- STEP#0017" << "createCommandBuffer" << endl << flush;
+        cout << "- STEP#0017 " << "createCommandBuffer" << endl << flush;
         this->commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        this->commandBufferAllocateInfo.pNext = NULL;
+        this->commandBufferAllocateInfo.pNext = nullptr;
         this->commandBufferAllocateInfo.commandPool = this->cmd_pool;
         this->commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         this->commandBufferAllocateInfo.commandBufferCount = 1;
@@ -292,7 +295,7 @@ namespace vlk {
 
         this->queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         this->queue_info.flags = 0;
-        this->queue_info.pNext = NULL;
+        this->queue_info.pNext = nullptr;
         this->queue_info.queueCount = 1;
         this->queue_info.pQueuePriorities = this->queue_priorities;
         this->queue_info.queueFamilyIndex = this->graphic_queue_family_index;
@@ -300,7 +303,7 @@ namespace vlk {
 
         this->physical_device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
         this->physical_device_info.flags = 0;
-        this->physical_device_info.pNext = NULL;
+        this->physical_device_info.pNext = nullptr;
         this->physical_device_info.queueCreateInfoCount = 1;
         this->physical_device_info.pQueueCreateInfos = &this->queue_info;
         this->physical_device_info.enabledExtensionCount = (uint32_t) this->deviceExtensionNames.size();
@@ -310,8 +313,8 @@ namespace vlk {
         this->physical_device_info.ppEnabledLayerNames =
                 this->enabledInstanceLayers.size() > 0 ? this->enabledInstanceLayers.data() : nullptr;
 
-        this->physical_device_info.pEnabledFeatures = NULL;
-        this->createDevice_res = vkCreateDevice(this->gpus[0], &(this->physical_device_info), NULL, &(this->virtualDevice));
+        this->physical_device_info.pEnabledFeatures = nullptr;
+        this->createDevice_res = vkCreateDevice(this->gpus[0], &(this->physical_device_info), nullptr, &(this->virtualDevice));
         assert(createDevice_res == VK_SUCCESS);
     }
 
@@ -326,7 +329,7 @@ namespace vlk {
 
         uint32_t formatCount;
         VkResult res = vkGetPhysicalDeviceSurfaceFormatsKHR(this->gpus[0], this->surfaceKHR,
-                                                            &formatCount, NULL);
+                                                            &formatCount, nullptr);
         assert(res == VK_SUCCESS);
         VkSurfaceFormatKHR *surfFormats =
                 (VkSurfaceFormatKHR *) malloc(formatCount * sizeof(VkSurfaceFormatKHR));
@@ -357,7 +360,7 @@ namespace vlk {
 
         uint32_t presentModeCount;
         res = vkGetPhysicalDeviceSurfacePresentModesKHR(this->gpus[0], this->surfaceKHR,
-                                                        &presentModeCount, NULL);
+                                                        &presentModeCount, nullptr);
         assert(res == VK_SUCCESS);
         VkPresentModeKHR *presentModes =
                 (VkPresentModeKHR *) malloc(presentModeCount * sizeof(VkPresentModeKHR));
@@ -444,7 +447,7 @@ namespace vlk {
             swapchain_ci.queueFamilyIndexCount = 2;
             swapchain_ci.pQueueFamilyIndices = queueFamilyIndices;
         }
-        this->swapChainCreation_res = vkCreateSwapchainKHR(this->virtualDevice, &swapchain_ci, NULL,
+        this->swapChainCreation_res = vkCreateSwapchainKHR(this->virtualDevice, &swapchain_ci, nullptr,
                                                            &this->swapChain);
         assert(res == VK_SUCCESS);
 
@@ -458,7 +461,7 @@ namespace vlk {
         cout << "- STEP#0035 " << "createImage" << endl;
 
         VkResult res = vkGetSwapchainImagesKHR(this->virtualDevice, this->swapChain,
-                                               &this->swapchainImageCount, NULL);
+                                               &this->swapchainImageCount, nullptr);
         assert(res == VK_SUCCESS);
 
         VkImage *swapchainImages =
@@ -484,7 +487,8 @@ namespace vlk {
         //
         cout << "- STEP#0036 " << "createDepthBuffer" << endl << flush;
 
-        VulkanUtility::depthBufferImage(this->gpus[0], this->virtualDevice, windowWidth, windowHeight, this->depthBuffer.format, this->depthBuffer.depthBufferImage, NUM_SAMPLES);
+        VulkanUtility::depthBufferImage(this->gpus[0], this->virtualDevice, windowWidth, windowHeight, this->depthBuffer.format,
+                                        this->depthBuffer.depthBufferImage, NUM_SAMPLES);
 
         VulkanUtility::setMemoryAllocation(this->virtualDevice, this->memory_properties, this->depthBuffer.depthBufferImage, this->depthBuffer.deviceMemory);
 
@@ -528,7 +532,7 @@ namespace vlk {
 
         writes[0] = {};
         writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        writes[0].pNext = NULL;
+        writes[0].pNext = nullptr;
         writes[0].dstSet = this->descriptorSetList[0];
         writes[0].descriptorCount = 1;
         writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -536,7 +540,7 @@ namespace vlk {
         writes[0].dstArrayElement = 0;
         writes[0].dstBinding = 0;
 
-        vkUpdateDescriptorSets(this->virtualDevice, 1, writes, 0, NULL);
+        vkUpdateDescriptorSets(this->virtualDevice, 1, writes, 0, nullptr);
     }
 
 
@@ -548,16 +552,18 @@ namespace vlk {
         VkSemaphoreCreateInfo imageAcquiredSemaphoreCreateInfo;
         imageAcquiredSemaphoreCreateInfo.sType =
                 VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-        imageAcquiredSemaphoreCreateInfo.pNext = NULL;
+        imageAcquiredSemaphoreCreateInfo.pNext = nullptr;
         imageAcquiredSemaphoreCreateInfo.flags = 0;
 
         VkResult res = vkCreateSemaphore(this->virtualDevice, &imageAcquiredSemaphoreCreateInfo,
-                                         NULL, &imageAcquiredSemaphore);
+                                         nullptr, &imageAcquiredSemaphore);
         assert(res == VK_SUCCESS);
         // Get the index of the next available swapchain image:
-        uint32_t currentBuffer = 0;
-        res = vkAcquireNextImageKHR(this->virtualDevice, this->swapChain, UINT64_MAX,
-                                    imageAcquiredSemaphore, VK_NULL_HANDLE,
+        res = vkAcquireNextImageKHR(this->virtualDevice,
+                                    this->swapChain,
+                                    UINT64_MAX,
+                                    imageAcquiredSemaphore,
+                                    VK_NULL_HANDLE,
                                     &currentBuffer);
 
         // TODO: Deal with the VK_SUBOPTIMAL_KHR and VK_ERROR_OUT_OF_DATE_KHR
@@ -565,13 +571,14 @@ namespace vlk {
         assert(res == VK_SUCCESS);
         VulkanUtility::set_image_layout(
                 this->commandBuffer,
-                this->graphicQueue,
-                buffers[currentBuffer].image,
+                this->buffers[this->currentBuffer].image,
                 VK_IMAGE_ASPECT_COLOR_BIT,
                 VK_IMAGE_LAYOUT_UNDEFINED,
                 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
     }
-    void VulkanContext::beginCommandBuffer(){
+
+    void VulkanContext::beginCommandBuffer() {
         //
         // STEP 102
         /* DEPENDS on init_command_buffer() */
@@ -581,14 +588,15 @@ namespace vlk {
         VkResult res;
         VkCommandBufferBeginInfo cmd_buf_info = {};
         cmd_buf_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        cmd_buf_info.pNext = NULL;
+        cmd_buf_info.pNext = nullptr;
         cmd_buf_info.flags = 0;
-        cmd_buf_info.pInheritanceInfo = NULL;
+        cmd_buf_info.pInheritanceInfo = nullptr;
 
         res = vkBeginCommandBuffer(this->commandBuffer, &cmd_buf_info);
         assert(res == VK_SUCCESS);
 
     }
+
     void VulkanContext::initRenderPass() {
 
     }
@@ -625,8 +633,6 @@ namespace vlk {
                 renderPass
         );
 
-
-
         res = vkEndCommandBuffer(this->commandBuffer);
         assert(res == VK_SUCCESS);
     }
@@ -662,19 +668,19 @@ namespace vlk {
 
     }
 
-    void VulkanContext::initFramebuffers() {
+    void VulkanContext::initFrameBuffers() {
         //
         // STEP 40
         //
-        cout << "- STEP#0040 " << "initFramebuffers" << endl << flush;
+        cout << "- STEP#0040 " << "initFrameBuffers" << endl << flush;
 
         std::vector<VkImageView> attachments;
         attachments.resize(2);
         attachments[1] = this->depthBuffer.imageView;
-        framebuffers.reserve(this->swapchainImageCount);
+        frameBuffers.reserve(this->swapchainImageCount);
         VkFramebufferCreateInfo fb_info = {};
         fb_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        fb_info.pNext = NULL;
+        fb_info.pNext = nullptr;
         fb_info.renderPass = this->renderPass;
         fb_info.attachmentCount = (uint32_t) attachments.size();
         fb_info.pAttachments = attachments.size() > 0 ? attachments.data() : nullptr;
@@ -684,28 +690,81 @@ namespace vlk {
 
         for (uint32_t i = 0; i < this->swapchainImageCount; i++) {
             attachments[0] = this->buffers[i].view;
-            VkResult res = vkCreateFramebuffer(this->virtualDevice, &fb_info, NULL,
-                                      &this->framebuffers[i]);
+            VkResult res = vkCreateFramebuffer(this->virtualDevice, &fb_info, nullptr,
+                                               &this->frameBuffers[i]);
             assert(res == VK_SUCCESS);
         }
     }
+
+    void VulkanContext::initVertexBuffers() {
+//
+        // STEP 110
+        /* DEPENDS on init_command_buffer() */
+        //
+        cout << "- STEP#0110 " << "initVertexBuffers" << endl << flush;
+
+        VulkanBufferUtility::createBuffer(
+                this->virtualDevice,
+                VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                (void *) g_vb_solid_face_colors_Data,
+                sizeof(g_vb_solid_face_colors_Data),
+                this->memory_properties,
+                this->cubeVertexBuffer);
+        vector<VkClearValue> clear_values;
+        clear_values.resize(2);
+        clear_values[0].color.float32[0] = 0.2f;
+        clear_values[0].color.float32[1] = 0.2f;
+        clear_values[0].color.float32[2] = 0.2f;
+        clear_values[0].color.float32[3] = 0.2f;
+        clear_values[1].depthStencil.depth = 1.0f;
+        clear_values[1].depthStencil.stencil = 0;
+        // TODO Understand why we have to reallocate the command buffer.
+        this->createCommandBuffer();
+        this->beginCommandBuffer();
+        VulkanUtility::createRenderPassBeginInfo(
+                this->renderPass,
+                this->commandBuffer,
+                this->frameBuffers[this->currentBuffer],
+                clear_values,
+                this->windowWidth,
+                this->windowHeight
+
+        );
+        const VkDeviceSize offsets[1] = {0};
+
+
+        vkCmdBindVertexBuffers(this->commandBuffer,
+                               0,
+                               1,
+                               &this->cubeVertexBuffer.buf,
+                               offsets);
+        vkCmdEndRenderPass(this->commandBuffer);
+    }
+
+
     //
     // DESTRUCTORS
     //
-    void VulkanContext::destroyRenderPass() {
-        vkDestroyRenderPass(this->virtualDevice, this->renderPass, NULL);
-        vkDestroySemaphore(this->virtualDevice, this->imageAcquiredSemaphore, NULL);
+    void VulkanContext::destroyVertexBuffers() {
+        vkDestroySemaphore(virtualDevice, imageAcquiredSemaphore, nullptr);
+        vkDestroyBuffer(virtualDevice, cubeVertexBuffer.buf, nullptr);
+        vkFreeMemory(virtualDevice, cubeVertexBuffer.mem, nullptr);
     }
 
-    void VulkanContext::destroyFramebuffers() {
+    void VulkanContext::destroyRenderPass() {
+        vkDestroyRenderPass(this->virtualDevice, this->renderPass, nullptr);
+        //vkDestroySemaphore(this->virtualDevice, this->imageAcquiredSemaphore, nullptr);
+    }
+
+    void VulkanContext::destroyFrameBuffers() {
         for (uint32_t i = 0; i < this->swapchainImageCount; i++) {
-            vkDestroyFramebuffer(this->virtualDevice, this->framebuffers[i], NULL);
+            vkDestroyFramebuffer(this->virtualDevice, this->frameBuffers[i], nullptr);
         }
-        this->framebuffers;
+        this->frameBuffers;
     }
 
     void VulkanContext::destroyDescriptorSet() {
-        vkDestroyDescriptorPool(virtualDevice, descriptorPool, NULL);
+        vkDestroyDescriptorPool(virtualDevice, descriptorPool, nullptr);
     }
 
     void VulkanContext::destroyPipeline() {
@@ -715,9 +774,9 @@ namespace vlk {
     }
 
     void VulkanContext::destroyDepthBuffer() {
-        vkDestroyImageView(this->virtualDevice, this->depthBuffer.imageView, NULL);
-        vkDestroyImage(this->virtualDevice, this->depthBuffer.depthBufferImage, NULL);
-        vkFreeMemory(this->virtualDevice, this->depthBuffer.deviceMemory, NULL);
+        vkDestroyImageView(this->virtualDevice, this->depthBuffer.imageView, nullptr);
+        vkDestroyImage(this->virtualDevice, this->depthBuffer.depthBufferImage, nullptr);
+        vkFreeMemory(this->virtualDevice, this->depthBuffer.deviceMemory, nullptr);
     }
 
     void VulkanContext::destroyCommandBuffers() {
@@ -727,7 +786,7 @@ namespace vlk {
             vkFreeCommandBuffers(this->virtualDevice, this->cmd_pool, 1, cmd_bufs);
         }
         if (this->command_pool_res == VK_SUCCESS) {
-            vkDestroyCommandPool(this->virtualDevice, this->cmd_pool, NULL);
+            vkDestroyCommandPool(this->virtualDevice, this->cmd_pool, nullptr);
         }
     }
 
@@ -741,25 +800,25 @@ namespace vlk {
             vkDestroyImageView(this->virtualDevice, this->buffers[i].view, nullptr);
         }
         vkDestroySwapchainKHR(this->virtualDevice, this->swapChain, nullptr);
-        vkDestroySurfaceKHR(this->inst, this->surfaceKHR, NULL);
+        vkDestroySurfaceKHR(this->inst, this->surfaceKHR, nullptr);
     }
 
     void VulkanContext::destroyVirtualDevice() {
         if (this->createDevice_res == VK_SUCCESS) {
             cout << "VirtualDevice destroyed " << endl;
-            vkDestroyDevice(this->virtualDevice, NULL);
+            vkDestroyDevice(this->virtualDevice, nullptr);
         }
     }
 
     void VulkanContext::destroyMemoryBuffer() {
-        vkDestroyBuffer(this->virtualDevice, this->uniformData.buf, NULL);
-        vkFreeMemory(this->virtualDevice, this->uniformData.mem, NULL);
+        vkDestroyBuffer(this->virtualDevice, this->uniformData.buf, nullptr);
+        vkFreeMemory(this->virtualDevice, this->uniformData.mem, nullptr);
     }
 
     VulkanContext::~VulkanContext() {
-
+        this->destroyVertexBuffers();
         this->destroyRenderPass();
-        this->destroyFramebuffers();
+        this->destroyFrameBuffers();
         this->destroyDescriptorSet();
         this->destroyPipeline();
         this->destroyDepthBuffer();
@@ -769,7 +828,7 @@ namespace vlk {
         this->destroyVirtualDevice();
         this->destroy_debug_report();
 
-        vkDestroyInstance(inst, NULL);
+        vkDestroyInstance(inst, nullptr);
     }
 
     //
@@ -814,12 +873,13 @@ namespace vlk {
         } else if (flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT) {
             std::cout << "[DEBUG       | ";
         }
-        std::cout << layerPrefix << "] ";
-        std::cout << msg;
+        cout << '(' << objType << ") ";
+        cout << layerPrefix << "] ";
+        cout << msg;
         if (0 && (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)) {
             std::cout << "\033[0m";
         }
-        std::cout << std::endl;
+        cout << endl;
         return false;
     }
 }

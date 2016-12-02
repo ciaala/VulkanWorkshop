@@ -4,7 +4,6 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 
 
-
 #include <vector>
 #include "vulkan/vulkan.h"
 #include "vulkan/vk_platform.h"
@@ -14,8 +13,6 @@
 
 #define VK_NO_PROTOTYPES
 #define _GLIBCXX_USE_C99_DYNAMIC 1
-
-
 
 
 using namespace std;
@@ -34,7 +31,7 @@ namespace vlk {
         VkDescriptorBufferInfo buffer_info;
     } uniform_data;
 
-    typedef struct _pipeline_info{
+    typedef struct _pipeline_info {
         std::vector<VkDescriptorSetLayout> descriptorLayoutList;
         VkPipelineLayout pipelineLayout;
     } pipeline_info;
@@ -48,7 +45,15 @@ namespace vlk {
         VkImageView view;
     } swap_chain_buffer;
 
+    typedef struct _vertex_buffer {
+        VkBuffer buf;
+        VkDeviceMemory mem;
+        VkDescriptorBufferInfo buffer_info;
+    } vertex_buffer;
+
     class ApplicationContext;
+
+    class VulkanBufferUtility;
 
     class VulkanContext;
 

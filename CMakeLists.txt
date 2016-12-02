@@ -28,7 +28,7 @@ set(SOURCE_FILES
         src/vlk/shaders/Shader.cpp
         src/vlk/shaders/Shader.h
         src/vlk/shaders/GLSLUtility.cpp
-        src/vlk/shaders/GLSLUtility.h)
+        src/vlk/shaders/GLSLUtility.h src/vlk/VulkanBufferUtility.cpp src/vlk/VulkanBufferUtility.h)
 
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -106,7 +106,7 @@ else ()
     message(FATAL_ERROR "Operating System ${CMAKE_SYSTEM_NAME} is not managed by this build software")
 endif ()
 
-include_directories(${VULKAN_INCLUDES} ${PROJECT_SOURCE_DIR}/src/vlk ${PLATFORM_INCLUDES} ${VULKAN_GLSDK_INCLUDES})
+include_directories(${VULKAN_INCLUDES} ${PROJECT_SOURCE_DIR}/src/vlk ${PROJECT_SOURCE_DIR}/src/data ${PLATFORM_INCLUDES} ${VULKAN_GLSDK_INCLUDES})
 # ${VULKAN_SAMPLES}
 
 add_executable(VulkanWorkshop ${SOURCE_FILES})

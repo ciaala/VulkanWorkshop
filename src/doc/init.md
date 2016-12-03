@@ -37,7 +37,7 @@ This is the sequence of steps required to setup Vulkan window
 - setup a surface
 
 - setup swap chain
-    - init swap chain info
+    - initDynamicStates swap chain info
         - requires
             - surface
             - image format

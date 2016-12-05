@@ -10,10 +10,6 @@
 
 using namespace std;
 namespace vlk {
-    typedef struct {
-        VkLayerProperties properties;
-        vector<VkExtensionProperties> extensions;
-    } vlk_layer_properties;
 
 
     class VulkanUtility {

@@ -26,9 +26,13 @@ namespace vlk {
 
         ~ShaderManager();
 
-        void loadVertexGLSLFromString(string identifier, string content);
+        void loadGLSLFromString(
 
-        void loadVertexGLSLFromFile(string identifier, string filename);
+                string identifier,
+                VkShaderStageFlagBits shaderStageFlagBits,
+                string content);
+
+        vector<VkPipelineShaderStageCreateInfo> &getShaderStages();
     };
 }
 

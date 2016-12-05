@@ -8,7 +8,6 @@
 #include "vlk.h"
 
 #include <string>
-#include "VulkanUtility.h"
 
 #define APP_SHORT_NAME "Terrific"
 #define ENGINE_SHORT_NAME "TerrificEngine"
@@ -48,7 +47,8 @@ namespace vlk {
         VkDeviceCreateInfo physical_device_info;
         VkPhysicalDeviceProperties physicalDeviceProperties;
         VkInstance inst;
-
+        vector<VkVertexInputBindingDescription> vertexBindings;
+        vector<VkVertexInputAttributeDescription> vertexAttributes;
         vector<vlk_layer_properties> instanceLayerProperties;
 
         /*   }; */

@@ -7,7 +7,10 @@
 #include <cassert>
 #include <iostream>
 #include <malloc.h>
+#include <shaders/ShaderManager.h>
 #include "cube_data.h"
+#include "VulkanPipeline.h"
+#include "VulkanUtility.h"
 
 using namespace std;
 namespace vlk {
@@ -15,8 +18,11 @@ namespace vlk {
             const char *application_name,
             const char *engine_name,
             const uint32_t width,
-            const uint32_t height
-    ) : application_name(application_name), engine_name(engine_name), windowWidth(width), windowHeight(height) {
+            const uint32_t height)
+            : application_name(application_name),
+              engine_name(engine_name),
+              windowWidth(width),
+              windowHeight(height) {
     }
 
     void VulkanContext::init() {
@@ -633,6 +639,7 @@ namespace vlk {
                 renderPass
         );
 
+
         res = vkEndCommandBuffer(this->commandBuffer);
         assert(res == VK_SUCCESS);
     }
@@ -710,6 +717,22 @@ namespace vlk {
                 sizeof(g_vb_solid_face_colors_Data),
                 this->memory_properties,
                 this->cubeVertexBuffer);
+
+        /* We won't use these here, but we will need this info when creating the
+         * pipeline */
+        this->vertexBindings[0].binding = 0;
+        this->vertexBindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+        this->vertexBindings[0].stride = sizeof(g_vb_solid_face_colors_Data[0]);
+
+        this->vertexAttributes[0].binding = 0;
+        this->vertexAttributes[0].location = 0;
+        this->vertexAttributes[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+        this->vertexAttributes[0].offset = 0;
+        this->vertexAttributes[1].binding = 0;
+        this->vertexAttributes[1].location = 1;
+        this->vertexAttributes[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+        this->vertexAttributes[1].offset = 16;
+
         vector<VkClearValue> clear_values;
         clear_values.resize(2);
         clear_values[0].color.float32[0] = 0.2f;
@@ -732,15 +755,16 @@ namespace vlk {
         );
         const VkDeviceSize offsets[1] = {0};
 
-
+        ShaderManager shm(virtualDevice);
         vkCmdBindVertexBuffers(this->commandBuffer,
                                0,
                                1,
                                &this->cubeVertexBuffer.buf,
                                offsets);
+        VulkanPipeline vp(this->virtualDevice, this->renderPass, this->vertexBindings, this->vertexAttributes, shm.getShaderStages(), pipelineInfo);
+        vp.init();
         vkCmdEndRenderPass(this->commandBuffer);
     }
-
 
     //
     // DESTRUCTORS

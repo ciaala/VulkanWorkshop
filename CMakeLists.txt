@@ -28,7 +28,14 @@ set(SOURCE_FILES
         src/vlk/shaders/Shader.cpp
         src/vlk/shaders/Shader.h
         src/vlk/shaders/GLSLUtility.cpp
-        src/vlk/shaders/GLSLUtility.h src/vlk/VulkanBufferUtility.cpp src/vlk/VulkanBufferUtility.h src/vlk/VulkanPipeline.cpp src/vlk/VulkanPipeline.h)
+        src/vlk/shaders/GLSLUtility.h
+        src/vlk/VulkanBufferUtility.cpp
+        src/vlk/VulkanBufferUtility.h
+        src/vlk/VulkanPipeline.cpp
+        src/vlk/VulkanPipeline.h
+
+
+        )
 
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")

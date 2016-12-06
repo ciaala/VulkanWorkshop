@@ -35,7 +35,7 @@ set(SOURCE_FILES
         src/vlk/VulkanPipeline.h
 
 
-        )
+        src/vlk/data/cube_data.h)
 
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")

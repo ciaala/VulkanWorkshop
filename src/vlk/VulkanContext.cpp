@@ -9,6 +9,7 @@
 #include <malloc.h>
 #include <shaders/ShaderManager.h>
 #include "cube_data.h"
+#include "data/cube_data.h"
 #include "VulkanPipeline.h"
 #include "VulkanUtility.h"
 
@@ -720,10 +721,12 @@ namespace vlk {
 
         /* We won't use these here, but we will need this info when creating the
          * pipeline */
+        this->vertexBindings.resize(1);
         this->vertexBindings[0].binding = 0;
         this->vertexBindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
         this->vertexBindings[0].stride = sizeof(g_vb_solid_face_colors_Data[0]);
 
+        this->vertexAttributes.resize(2);
         this->vertexAttributes[0].binding = 0;
         this->vertexAttributes[0].location = 0;
         this->vertexAttributes[0].format = VK_FORMAT_R32G32B32A32_SFLOAT;
@@ -756,6 +759,8 @@ namespace vlk {
         const VkDeviceSize offsets[1] = {0};
 
         ShaderManager shm(virtualDevice);
+        shm.loadGLSLFromString("cubeFragmentShader", VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, vlk::data::fragShaderText);
+        shm.loadGLSLFromString("cubeVertexShader", VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, vlk::data::vertShaderText);
         vkCmdBindVertexBuffers(this->commandBuffer,
                                0,
                                1,

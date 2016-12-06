@@ -13,7 +13,7 @@ namespace vlk {
     }
 
 /**
- *
+ * VK_SHADER_STAGE_VERTEX_BIT |
  *
  * @param identifier
  * @param shaderStage
@@ -35,7 +35,7 @@ namespace vlk {
         shaderStages[index].pName = "main";
 
 
-        bool retVal = this->glslUtility.GLSLtoSPV(VK_SHADER_STAGE_VERTEX_BIT, content.data(), vtx_spv);
+        bool retVal = this->glslUtility.GLSLtoSPV(shaderStageFlagBits, content.data(), vtx_spv);
         assert(retVal);
         VkShaderModuleCreateInfo moduleCreateInfo;
 
@@ -47,7 +47,7 @@ namespace vlk {
         VkResult res = vkCreateShaderModule(this->virtualDevice, &moduleCreateInfo, NULL,
                                             &(shaderStages[index].module));
         assert(res == VK_SUCCESS);
-
+        this->shaders[identifier] = index;
     }
 
     ShaderManager::~ShaderManager() {

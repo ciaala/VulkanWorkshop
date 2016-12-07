@@ -18,7 +18,7 @@ namespace vlk {
         //unordered_map<string, Shader> fragment_shaders;
         unordered_map<string, uint64_t> shaders;
         vector<VkPipelineShaderStageCreateInfo> shaderStages;
-        vector<unsigned int> vtx_spv;
+        //vector<unsigned int> vtx_spv;
         VkDevice &virtualDevice;
         GLSLUtility glslUtility;
     public:

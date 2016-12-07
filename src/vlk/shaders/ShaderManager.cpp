@@ -3,7 +3,8 @@
 //
 
 #include "ShaderManager.h"
-
+#include <iostream>
+using namespace std;
 
 namespace vlk {
 
@@ -24,27 +25,30 @@ namespace vlk {
             string identifier,
             VkShaderStageFlagBits shaderStageFlagBits,
             string content) {
+
+        std::vector<unsigned int> spv_content;
+        cout << "Loading shader " << identifier << endl << flush;
         uint64_t index = shaderStages.size();
         shaderStages.resize(index + 1);
         shaderStages[index].sType =
                 VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        shaderStages[index].pNext = NULL;
-        shaderStages[index].pSpecializationInfo = NULL;
+        shaderStages[index].pNext = nullptr;
+        shaderStages[index].pSpecializationInfo = nullptr;
         shaderStages[index].flags = 0;
         shaderStages[index].stage = shaderStageFlagBits;
         shaderStages[index].pName = "main";
 
 
-        bool retVal = this->glslUtility.GLSLtoSPV(shaderStageFlagBits, content.data(), vtx_spv);
+        bool retVal = this->glslUtility.GLSLtoSPV(shaderStageFlagBits, content.data(), spv_content);
         assert(retVal);
         VkShaderModuleCreateInfo moduleCreateInfo;
 
         moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-        moduleCreateInfo.pNext = NULL;
+        moduleCreateInfo.pNext = nullptr;
         moduleCreateInfo.flags = 0;
-        moduleCreateInfo.codeSize = vtx_spv.size() * sizeof(unsigned int);
-        moduleCreateInfo.pCode = vtx_spv.data();
-        VkResult res = vkCreateShaderModule(this->virtualDevice, &moduleCreateInfo, NULL,
+        moduleCreateInfo.codeSize = spv_content.size() * sizeof(unsigned int);
+        moduleCreateInfo.pCode = spv_content.data();
+        VkResult res = vkCreateShaderModule(this->virtualDevice, &moduleCreateInfo, nullptr,
                                             &(shaderStages[index].module));
         assert(res == VK_SUCCESS);
         this->shaders[identifier] = index;

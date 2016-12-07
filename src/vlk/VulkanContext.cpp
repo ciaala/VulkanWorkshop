@@ -761,6 +761,7 @@ namespace vlk {
         ShaderManager shm(virtualDevice);
         shm.loadGLSLFromString("cubeFragmentShader", VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, vlk::data::fragShaderText);
         shm.loadGLSLFromString("cubeVertexShader", VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, vlk::data::vertShaderText);
+        assert(shm.getShaderStages().size() == 2);
         vkCmdBindVertexBuffers(this->commandBuffer,
                                0,
                                1,

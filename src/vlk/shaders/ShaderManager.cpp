@@ -4,6 +4,7 @@
 
 #include "ShaderManager.h"
 #include <iostream>
+
 using namespace std;
 
 namespace vlk {
@@ -55,7 +56,9 @@ namespace vlk {
     }
 
     ShaderManager::~ShaderManager() {
-
+        for (auto &&shader  : shaderStages) {
+            vkDestroyShaderModule(this->virtualDevice, shader.module, nullptr);
+        }
     }
 
     vector<VkPipelineShaderStageCreateInfo> &ShaderManager::getShaderStages() {

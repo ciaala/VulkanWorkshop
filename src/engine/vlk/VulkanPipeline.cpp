@@ -4,7 +4,9 @@
 
 #include "VulkanPipeline.h"
 #include <cassert>
+#include <iostream>
 
+using namespace std;
 namespace vlk {
     void VulkanPipeline::init() {
         this->initDynamicState();
@@ -12,7 +14,7 @@ namespace vlk {
         this->initAssemblyState();
         this->initRasterizationState();
         this->initColorBlendState();
-        this->initViewportState();
+        this->initViewportState(0);
         this->initDepthStencil();
         this->initMultisampleState();
         this->createPipeline();
@@ -83,11 +85,11 @@ namespace vlk {
         this->cb.blendConstants[3] = 1.0f;
     }
 
-    void VulkanPipeline::initViewportState() {
+    void VulkanPipeline::initViewportState(const uint32_t viewportsNum) {
         vp.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
         vp.pNext = nullptr;
         vp.flags = 0;
-        vp.viewportCount = NUM_VIEWPORTS;
+        vp.viewportCount = viewportsNum;
         dynamicStateEnables[dynamicState.dynamicStateCount++] =
                 VK_DYNAMIC_STATE_VIEWPORT;
         vp.scissorCount = NUM_SCISSORS;
@@ -132,6 +134,9 @@ namespace vlk {
     }
 
     void VulkanPipeline::createPipeline() {
+        this->log(1,"VulkanPipeline::createPipeline");
+        this->initViewportState(NUM_VIEWPORTS);
+
         VkGraphicsPipelineCreateInfo pipelineCreateInfo;
         pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
         pipelineCreateInfo.pNext = nullptr;
@@ -177,5 +182,32 @@ namespace vlk {
             pipelineInfo(pipelineInfo) {
 
 
+    }
+
+    void VulkanPipeline::bindGraphic(
+            const VkCommandBuffer &commandBuffer,
+            const vector<VkDescriptorSet> &descriptorSetList,
+            const vector<VkBuffer> &vertexBuffers) {
+
+        vkCmdBindPipeline(commandBuffer,
+                          VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          this->pipeline);
+        vkCmdBindDescriptorSets(commandBuffer,
+                                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                this->pipelineInfo.pipelineLayout,
+                                0,
+                                (uint32_t) descriptorSetList.size(),
+                                descriptorSetList.size() > 0 ? descriptorSetList.data() : nullptr,
+                                0, nullptr);
+        const VkDeviceSize offsets[1] = {0};
+        vkCmdBindVertexBuffers(commandBuffer,
+                               0,
+                               (uint32_t) vertexBuffers.size(),
+                               vertexBuffers.size() > 0 ? vertexBuffers.data() : nullptr,
+                               offsets);
+    }
+
+    void VulkanPipeline::log(const uint8_t level, const char* string) {
+        cout << string << endl;
     }
 }

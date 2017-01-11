@@ -6,6 +6,7 @@
 #define VULKANWORKSHOP_VULKANSETUP_H
 
 #include "vlk.h"
+#include "VulkanPipeline.h"
 
 #include <string>
 
@@ -86,9 +87,9 @@ namespace vlk {
 
         VkResult init_enumerate_device();
 
-        bool get_queue_families();
+        bool setupDevicesAndQueues();
 
-        void createVirtualDevice();
+        void initVirtualDevice();
 
         void destroyVirtualDevice();
 
@@ -125,7 +126,7 @@ namespace vlk {
 
         void destroy_surfaceKHR();
 
-        void create_swapChain();
+        void initSwapChain();
 
         uint32_t queueFamilyIndices[2];
 
@@ -135,7 +136,7 @@ namespace vlk {
 
         VkSurfaceKHR surfaceKHR = nullptr;
 
-        void createImage();
+        void initImage();
 
         uint32_t swapchainImageCount;
 
@@ -168,11 +169,11 @@ namespace vlk {
 
         void initWithWindow();
 
-        void createDepthBuffer();
+        void initDepthBuffer();
 
         void destroyMemoryBuffer();
 
-        void createUniformBuffer();
+        void initUniformBuffer();
 
         uniform_data uniformData;
 
@@ -191,9 +192,9 @@ namespace vlk {
         pipeline_info pipelineInfo;
         const uint32_t NUM_DESCRIPTOR_SET = 1;
 
-        void createPipeline();
+        void setupDescriptorPipeline();
 
-        void createDescriptorSet();
+        void initDescriptorSet();
 
         void destroyDescriptorSet();
 
@@ -233,6 +234,15 @@ namespace vlk {
         vertex_buffer cubeVertexBuffer;
 
         void destroyVertexBuffers();
+
+
+        void destroySemaphore();
+        void destroyFence();
+        VulkanPipeline *vp = nullptr;
+        VkFence drawFence;
+        VkViewport viewport;
+        VkRect2D scissor;
+        void drawScene();
     };
 
     VkBool32 vlkDebugCallback(VkDebugReportFlagsEXT flags,

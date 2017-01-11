@@ -5,6 +5,7 @@
 #include <cassert>
 #include <iostream>
 #include "VulkanUtility.h"
+#include "VulkanPipeline.h"
 
 namespace vlk {
     VkResult VulkanUtility::init_global_layer_properties(
@@ -12,7 +13,7 @@ namespace vlk {
         cout << "VulkanUtility::init_global_layer_properties" << endl;
 
         uint32_t instance_layer_count;
-        VkLayerProperties *vk_props = NULL;
+        VkLayerProperties *vk_props = nullptr;
         VkResult res;
 
         do {
@@ -49,7 +50,7 @@ namespace vlk {
         VkExtensionProperties *instance_extensions;
         uint32_t instance_extension_count;
         VkResult res;
-        char *layer_name = NULL;
+        char *layer_name = nullptr;
 
         layer_name = layer_props.properties.layerName;
 
@@ -95,7 +96,7 @@ namespace vlk {
 
         VkImageViewCreateInfo view_info = {};
         view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        view_info.pNext = NULL;
+        view_info.pNext = nullptr;
         view_info.image = VK_NULL_HANDLE;
         view_info.format = depth_format;
         view_info.components.r = VK_COMPONENT_SWIZZLE_R;
@@ -125,7 +126,7 @@ namespace vlk {
         cout << "VulkanUtility::init_swapchain_ci" << endl;
 
         swapchain_ci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-        swapchain_ci.pNext = NULL;
+        swapchain_ci.pNext = nullptr;
         swapchain_ci.flags = 0;
         swapchain_ci.surface = surfaceKHR;
         swapchain_ci.minImageCount = desiredNumberOfSwapChainImages;
@@ -142,7 +143,7 @@ namespace vlk {
         swapchain_ci.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
         swapchain_ci.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
         swapchain_ci.queueFamilyIndexCount = 0;
-        swapchain_ci.pQueueFamilyIndices = NULL;
+        swapchain_ci.pQueueFamilyIndices = nullptr;
 
     }
 
@@ -202,7 +203,7 @@ namespace vlk {
         VkResult res;
         VkImageViewCreateInfo color_image_view = {};
         color_image_view.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        color_image_view.pNext = NULL;
+        color_image_view.pNext = nullptr;
         color_image_view.flags = 0;
         color_image_view.image = buffer.image;
         color_image_view.viewType = VK_IMAGE_VIEW_TYPE_2D;
@@ -246,7 +247,7 @@ namespace vlk {
         }
 
         image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-        image_info.pNext = NULL;
+        image_info.pNext = nullptr;
         image_info.flags = 0;
         image_info.imageType = VK_IMAGE_TYPE_2D;
         image_info.format = VK_FORMAT_D16_UNORM;
@@ -259,7 +260,7 @@ namespace vlk {
         image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         image_info.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
         image_info.queueFamilyIndexCount = 0;
-        image_info.pQueueFamilyIndices = NULL;
+        image_info.pQueueFamilyIndices = nullptr;
         image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
         vkCreateImage(virtualDevice, &image_info, NULL, &image);
@@ -276,7 +277,7 @@ namespace vlk {
 
         VkMemoryAllocateInfo mem_alloc = {};
         mem_alloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        mem_alloc.pNext = NULL;
+        mem_alloc.pNext = nullptr;
         mem_alloc.allocationSize = 0;
         mem_alloc.memoryTypeIndex = 0;
         vkGetImageMemoryRequirements(virtualDevice, image, &mem_reqs);
@@ -302,15 +303,15 @@ namespace vlk {
             uniform_data &uniformData,
             VkDeviceSize memorySize,
             VkMemoryRequirements &mem_reqs) {
-        cout << "VulkanUtility::createUniformBuffer" << endl;
+        cout << "VulkanUtility::initUniformBuffer" << endl;
 
         VkBufferCreateInfo buf_info = {};
         buf_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        buf_info.pNext = NULL;
+        buf_info.pNext = nullptr;
         buf_info.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
         buf_info.size = memorySize;
         buf_info.queueFamilyIndexCount = 0;
-        buf_info.pQueueFamilyIndices = NULL;
+        buf_info.pQueueFamilyIndices = nullptr;
         buf_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
         buf_info.flags = 0;
         VkResult res = vkCreateBuffer(virtualDevice, &buf_info, NULL, &uniformData.buf);
@@ -328,7 +329,7 @@ namespace vlk {
 
         VkMemoryAllocateInfo alloc_info = {};
         alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        alloc_info.pNext = NULL;
+        alloc_info.pNext = nullptr;
         alloc_info.memoryTypeIndex = 0;
 
         alloc_info.allocationSize = mem_reqs.size;
@@ -349,18 +350,18 @@ namespace vlk {
             pipeline_info &pipelineInfo,
             const uint32_t NUM_DESCRIPTOR_SETS
     ) {
-        cout << "VulkanUtility::createPipeline" << endl;
+        cout << "VulkanUtility::setupDescriptorPipeline" << endl;
         VkDescriptorSetLayoutBinding layout_binding = {};
         layout_binding.binding = 0;
         layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         layout_binding.descriptorCount = 1;
         layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-        layout_binding.pImmutableSamplers = NULL;
+        layout_binding.pImmutableSamplers = nullptr;
 
         VkDescriptorSetLayoutCreateInfo descriptor_layout = {};
         descriptor_layout.sType =
                 VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        descriptor_layout.pNext = NULL;
+        descriptor_layout.pNext = nullptr;
         descriptor_layout.bindingCount = 1;
         descriptor_layout.pBindings = &layout_binding;
 
@@ -372,9 +373,9 @@ namespace vlk {
         VkPipelineLayoutCreateInfo pPipelineLayoutCreateInfo = {};
         pPipelineLayoutCreateInfo.sType =
                 VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pPipelineLayoutCreateInfo.pNext = NULL;
+        pPipelineLayoutCreateInfo.pNext = nullptr;
         pPipelineLayoutCreateInfo.pushConstantRangeCount = 0;
-        pPipelineLayoutCreateInfo.pPushConstantRanges = NULL;
+        pPipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
         pPipelineLayoutCreateInfo.setLayoutCount = (uint32_t) pipelineInfo.descriptorLayoutList.size();
         pPipelineLayoutCreateInfo.pSetLayouts = pipelineInfo.descriptorLayoutList.data();
 
@@ -396,7 +397,7 @@ namespace vlk {
 
         VkDescriptorPoolCreateInfo descriptor_pool = {};
         descriptor_pool.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        descriptor_pool.pNext = NULL;
+        descriptor_pool.pNext = nullptr;
         descriptor_pool.maxSets = 1;
         descriptor_pool.poolSizeCount = 1;
         descriptor_pool.pPoolSizes = type_count;
@@ -407,7 +408,7 @@ namespace vlk {
 
         VkDescriptorSetAllocateInfo alloc_info[1];
         alloc_info[0].sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        alloc_info[0].pNext = NULL;
+        alloc_info[0].pNext = nullptr;
         alloc_info[0].descriptorPool = descriptorPool;
         alloc_info[0].descriptorSetCount = (uint32_t) pipelineInfo.descriptorLayoutList.size();
         alloc_info[0].pSetLayouts = pipelineInfo.descriptorLayoutList.size() > 0 ? pipelineInfo.descriptorLayoutList.data() : nullptr;
@@ -433,7 +434,7 @@ namespace vlk {
 
         VkImageMemoryBarrier image_memory_barrier = {};
         image_memory_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        image_memory_barrier.pNext = NULL;
+        image_memory_barrier.pNext = nullptr;
         image_memory_barrier.srcAccessMask = 0;
         image_memory_barrier.dstAccessMask = 0;
         image_memory_barrier.oldLayout = old_image_layout;
@@ -502,24 +503,24 @@ namespace vlk {
         subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
         subpass.flags = 0;
         subpass.inputAttachmentCount = 0;
-        subpass.pInputAttachments = NULL;
+        subpass.pInputAttachments = nullptr;
         subpass.colorAttachmentCount = (uint32_t) colorReferences.size();
         subpass.pColorAttachments = colorReferences.size() > 0 ? colorReferences.data() : nullptr;
-        subpass.pResolveAttachments = NULL;
+        subpass.pResolveAttachments = nullptr;
         subpass.pDepthStencilAttachment = &depthReference;
         subpass.preserveAttachmentCount = 0;
-        subpass.pPreserveAttachments = NULL;
+        subpass.pPreserveAttachments = nullptr;
 
 
         VkRenderPassCreateInfo rp_info = {};
         rp_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        rp_info.pNext = NULL;
+        rp_info.pNext = nullptr;
         rp_info.attachmentCount = (uint32_t) attachments.size();
         rp_info.pAttachments = (attachments.size() > 0) ? attachments.data() : nullptr;
         rp_info.subpassCount = 1;
         rp_info.pSubpasses = &subpass;
         rp_info.dependencyCount = 0;
-        rp_info.pDependencies = NULL;
+        rp_info.pDependencies = nullptr;
 
         VkResult res = vkCreateRenderPass(virtualDevice, &rp_info, NULL, &renderPass);
         assert(res == VK_SUCCESS);
@@ -550,6 +551,50 @@ namespace vlk {
         renderPassBeginInfo.pClearValues = clear_values.size() > 0 ? clear_values.data() : nullptr;
 
         vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    }
+
+    void VulkanUtility::initViewPort(VkViewport &viewport, const float height, const float width, const uint32_t viewportsNum,
+                                     const VkCommandBuffer &commandBuffer) {
+        viewport.height = height;
+        viewport.width = width;
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+        viewport.x = 0;
+        viewport.y = 0;
+        vkCmdSetViewport(commandBuffer, 0, viewportsNum, &viewport);
+    }
+
+
+    void VulkanUtility::prensetImage(const VkDevice &virtualDevice, const VkFence *drawFence, const VkQueue &presentQueue, const uint64_t fenceTimeout,
+                                     const vector<VkSwapchainKHR> &swapChains, uint32_t *currentBuffer) {
+        /* Now present the image in the window */
+        VkResult res;
+        VkPresentInfoKHR present;
+        present.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        present.pNext = nullptr;
+        present.swapchainCount = swapChains.size();
+        present.pSwapchains = swapChains.size() > 0 ? swapChains.data() : nullptr;
+        present.pImageIndices = currentBuffer;
+        present.pWaitSemaphores = nullptr;
+        present.waitSemaphoreCount = 0;
+        present.pResults = nullptr;
+
+        /* Make sure command buffer is finished before presenting */
+        do {
+            res = vkWaitForFences(virtualDevice, 1, drawFence, VK_TRUE, fenceTimeout);
+        } while (res == VK_TIMEOUT);
+
+        assert(res == VK_SUCCESS);
+        res = vkQueuePresentKHR(presentQueue, &present);
+        assert(res == VK_SUCCESS);
+    }
+
+    void VulkanUtility::initScissors(VkCommandBuffer &commandBuffer, VkRect2D &scissor, const uint32_t width, const uint32_t height) {
+        scissor.extent.width = width;
+        scissor.extent.height = height;
+        scissor.offset.x = 0;
+        scissor.offset.y = 0;
+        vkCmdSetScissor(commandBuffer, 0, NUM_SCISSORS, &scissor);
     }
 
 }

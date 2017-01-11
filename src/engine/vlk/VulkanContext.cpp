@@ -6,11 +6,9 @@
 #include "VulkanBufferUtility.h"
 #include <cassert>
 #include <iostream>
-#include <malloc.h>
 #include <shaders/ShaderManager.h>
 #include "cube_data.h"
 #include "data/cube_data.h"
-#include "VulkanPipeline.h"
 #include "VulkanUtility.h"
 
 using namespace std;
@@ -38,7 +36,6 @@ namespace vlk {
         if (init_instance() == VK_SUCCESS) {
             init_debug_callback();
             init_enumerate_device();
-            get_queue_families();
         } else {
             cerr << "Instance not created" << endl;
             exit(-1);
@@ -48,23 +45,36 @@ namespace vlk {
 
     void VulkanContext::initWithWindow() {
 
+        // set desiredNumberOfSwapChainImages for setupSwapChainExtent
+        selectSurfaceCapabilities();
+
+        setupSwapChainExtent(windowWidth, windowHeight);
+        setupDevicesAndQueues();
+
         selectGraphicPresenterQueue();
-        createVirtualDevice();
+        initVirtualDevice();
+
         createCommandPool();
         createCommandBuffer();
-        selectImageFormat();
-        selectSurfaceCapabilities();
-        setupSwapChainExtent(windowWidth, windowHeight);
-        setupTransform();
-        create_swapChain();
-        createImage();
-        createDepthBuffer();
-        createUniformBuffer();
-        createPipeline();
-        createDescriptorSet();
         beginCommandBuffer();
+
+
+        selectImageFormat();
+
+        initSwapChain();
+
+        initDepthBuffer();
+        initUniformBuffer();
+
+        // Setup the descriptor
+        setupDescriptorPipeline();
+        initDescriptorSet();
+
+
+        initImage();
+
+
         initRenderPass();
-        runRenderPass();
         initFrameBuffers();
         initVertexBuffers();
 
@@ -164,6 +174,34 @@ namespace vlk {
 
     }
 */
+
+    bool VulkanContext::setupDevicesAndQueues() {
+
+        bool found = false;
+
+        vkGetPhysicalDeviceQueueFamilyProperties(
+                this->gpus[0],
+                &this->queue_family_count,
+                nullptr);
+        assert(this->queue_family_count >= 0);
+        this->queue_properties.resize(this->queue_family_count);
+        vkGetPhysicalDeviceQueueFamilyProperties(
+                this->gpus[0],
+                &this->queue_family_count,
+                this->queue_properties.data());
+
+        for (unsigned int i = 0; i < this->queue_family_count; i++) {
+            if (this->queue_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+                this->queue_info.queueFamilyIndex = i;
+                found = true;
+                break;
+            }
+        }
+        assert(found);
+        assert(this->queue_family_count >= 1);
+        return found;
+    }
+
     VkResult VulkanContext::init_enumerate_device() {
 
         //
@@ -221,33 +259,6 @@ namespace vlk {
     }
 
 
-    bool VulkanContext::get_queue_families() {
-
-        bool found = false;
-
-        vkGetPhysicalDeviceQueueFamilyProperties(
-                this->gpus[0],
-                &this->queue_family_count,
-                nullptr);
-        assert(this->queue_family_count >= 0);
-        this->queue_properties.resize(this->queue_family_count);
-        vkGetPhysicalDeviceQueueFamilyProperties(
-                this->gpus[0],
-                &this->queue_family_count,
-                this->queue_properties.data());
-
-        for (unsigned int i = 0; i < this->queue_family_count; i++) {
-            if (this->queue_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-                this->queue_info.queueFamilyIndex = i;
-                found = true;
-                break;
-            }
-        }
-        assert(found);
-        assert(this->queue_family_count >= 1);
-        return found;
-    }
-
     /**
      * Identify the queues to be used
      * GRAPHIC, PRESENT
@@ -294,11 +305,11 @@ namespace vlk {
         free(pSupportsPresent);
     }
 
-    void VulkanContext::createVirtualDevice() {
+    void VulkanContext::initVirtualDevice() {
         //
         // STEP 26
         //
-        cout << "- STEP#0026 " << "createVirtualDevice" << endl << flush;
+        cout << "- STEP#0026 " << "initVirtualDevice" << endl << flush;
 
         this->queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         this->queue_info.flags = 0;
@@ -321,7 +332,10 @@ namespace vlk {
                 this->enabledInstanceLayers.size() > 0 ? this->enabledInstanceLayers.data() : nullptr;
 
         this->physical_device_info.pEnabledFeatures = nullptr;
-        this->createDevice_res = vkCreateDevice(this->gpus[0], &(this->physical_device_info), nullptr, &(this->virtualDevice));
+        this->createDevice_res = vkCreateDevice(this->gpus[0],
+                                                &(this->physical_device_info),
+                                                nullptr,
+                                                &(this->virtualDevice));
         assert(createDevice_res == VK_SUCCESS);
     }
 
@@ -428,12 +442,12 @@ namespace vlk {
         }
     }
 
-    void VulkanContext::create_swapChain() {
+    void VulkanContext::initSwapChain() {
         //
         // STEP 34
         //
-        cout << "- STEP#0034 " << "create_swapChain" << endl;
-
+        cout << "- STEP#0034 " << "initSwapChain" << endl;
+        setupTransform();
         VulkanUtility::init_swapchain_ci(
                 swapchain_ci, this->surfaceKHR, this->desiredNumberOfSwapChainImages,
                 this->imageFormat, this->swapchainExtent,
@@ -454,18 +468,18 @@ namespace vlk {
             swapchain_ci.queueFamilyIndexCount = 2;
             swapchain_ci.pQueueFamilyIndices = queueFamilyIndices;
         }
-        this->swapChainCreation_res = vkCreateSwapchainKHR(this->virtualDevice, &swapchain_ci, nullptr,
+        this->swapChainCreation_res = vkCreateSwapchainKHR(this->virtualDevice,
+                                                           &swapchain_ci,
+                                                           nullptr,
                                                            &this->swapChain);
         assert(res == VK_SUCCESS);
-
-
     }
 
-    void VulkanContext::createImage() {
+    void VulkanContext::initImage() {
         //
         // STEP 35
         //
-        cout << "- STEP#0035 " << "createImage" << endl;
+        cout << "- STEP#0035 " << "initImage" << endl;
 
         VkResult res = vkGetSwapchainImagesKHR(this->virtualDevice, this->swapChain,
                                                &this->swapchainImageCount, nullptr);
@@ -488,11 +502,11 @@ namespace vlk {
         }
     }
 
-    void VulkanContext::createDepthBuffer() {
+    void VulkanContext::initDepthBuffer() {
         //
         // STEP 36
         //
-        cout << "- STEP#0036 " << "createDepthBuffer" << endl << flush;
+        cout << "- STEP#0036 " << "initDepthBuffer" << endl << flush;
 
         VulkanUtility::depthBufferImage(this->gpus[0], this->virtualDevice, windowWidth, windowHeight, this->depthBuffer.format,
                                         this->depthBuffer.depthBufferImage, NUM_SAMPLES);
@@ -502,11 +516,11 @@ namespace vlk {
         VulkanUtility::createImageViewInfo(this->virtualDevice, this->depthBuffer.depthBufferImage, this->depthBuffer.imageView);
     }
 
-    void VulkanContext::createUniformBuffer() {
+    void VulkanContext::initUniformBuffer() {
         //
         // STEP 37
         //
-        cout << "- STEP#0037 " << "createUniformBuffer" << endl << flush;
+        cout << "- STEP#0037 " << "initUniformBuffer" << endl << flush;
         VulkanUtility::createUniformBuffer(this->virtualDevice, this->uniformData, sizeof(myData), this->memoryRequirements);
 
         VulkanUtility::setMemoryAllocation(this->virtualDevice, this->memory_properties, this->uniformData, this->memoryRequirements);
@@ -514,19 +528,19 @@ namespace vlk {
 
     }
 
-    void VulkanContext::createPipeline() {
+    void VulkanContext::setupDescriptorPipeline() {
         //
         // STEP 38
         //
-        cout << "- STEP#0038 " << "createPipeline" << endl << flush;
+        cout << "- STEP#0038 " << "setupDescriptorPipeline" << endl << flush;
         VulkanUtility::createPipeline(this->virtualDevice, this->pipelineInfo, this->NUM_DESCRIPTOR_SET);
     }
 
-    void VulkanContext::createDescriptorSet() {
+    void VulkanContext::initDescriptorSet() {
         //
         // STEP 39
         //
-        cout << "- STEP#0039 " << "createDescriptorSet" << endl << flush;
+        cout << "- STEP#0039 " << "initDescriptorSet" << endl << flush;
         VulkanUtility::createDescriptorSet(this->virtualDevice, this->descriptorPool, this->descriptorSetList, this->NUM_DESCRIPTOR_SET, this->pipelineInfo);
     }
 
@@ -605,14 +619,10 @@ namespace vlk {
     }
 
     void VulkanContext::initRenderPass() {
-
-    }
-
-    void VulkanContext::runRenderPass() {
         //
         // STEP 102
         //
-        cout << "- STEP#0103 " << "runRenderPass" << endl << flush;
+        cout << "- STEP#0103 " << "initRenderPass" << endl << flush;
 
         VkSubpassDescription subPass;
         vector<VkAttachmentDescription> attachmentDescriptions;
@@ -627,7 +637,6 @@ namespace vlk {
         depthReference.attachment = 1;
         depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-        this->acquireNextImage();
 
         this->prepareAttachments(attachmentDescriptions);
 
@@ -640,7 +649,29 @@ namespace vlk {
                 renderPass
         );
 
+        ShaderManager shm(virtualDevice);
+        shm.loadGLSLFromString("cubeFragmentShader", VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, vlk::data::fragShaderText);
+        shm.loadGLSLFromString("cubeVertexShader", VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, vlk::data::vertShaderText);
+        assert(shm.getShaderStages().size() == 2);
+        const VkDeviceSize offsets[1] = {0};
 
+        vkCmdBindVertexBuffers(this->commandBuffer,
+                               0,
+                               1,
+                               &this->cubeVertexBuffer.buf,
+                               offsets);
+
+        this->vp = new VulkanPipeline(this->virtualDevice, this->renderPass, this->vertexBindings, this->vertexAttributes, shm.getShaderStages(), pipelineInfo);
+        vp->init();
+    }
+
+    void VulkanContext::runRenderPass() {
+        this->acquireNextImage();
+        VulkanUtility::initViewPort(this->viewport, this->windowHeight, this->windowWidth, 1, this->commandBuffer);
+        VulkanUtility::initScissors(this->commandBuffer,this->scissor, this->windowHeight, this->windowWidth);
+
+        this->drawScene();
+        vkCmdEndRenderPass(this->commandBuffer);
         res = vkEndCommandBuffer(this->commandBuffer);
         assert(res == VK_SUCCESS);
     }
@@ -703,6 +734,10 @@ namespace vlk {
             assert(res == VK_SUCCESS);
         }
     }
+    void VulkanContext::drawScene() {
+        vkCmdDraw(this->commandBuffer, 12 * 3, 1, 0, 0);
+    }
+
 
     void VulkanContext::initVertexBuffers() {
 //
@@ -756,20 +791,7 @@ namespace vlk {
                 this->windowHeight
 
         );
-        const VkDeviceSize offsets[1] = {0};
 
-        ShaderManager shm(virtualDevice);
-        shm.loadGLSLFromString("cubeFragmentShader", VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT, vlk::data::fragShaderText);
-        shm.loadGLSLFromString("cubeVertexShader", VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, vlk::data::vertShaderText);
-        assert(shm.getShaderStages().size() == 2);
-        vkCmdBindVertexBuffers(this->commandBuffer,
-                               0,
-                               1,
-                               &this->cubeVertexBuffer.buf,
-                               offsets);
-        VulkanPipeline vp(this->virtualDevice, this->renderPass, this->vertexBindings, this->vertexAttributes, shm.getShaderStages(), pipelineInfo);
-        vp.init();
-        vkCmdEndRenderPass(this->commandBuffer);
     }
 
     //
@@ -876,6 +898,16 @@ namespace vlk {
         return this->res == VK_SUCCESS;
     }
 
+    void VulkanContext::destroySemaphore() {
+        vkDestroySemaphore(this->virtualDevice, imageAcquiredSemaphore, nullptr);
+
+    }
+
+    void VulkanContext::destroyFence() {
+        vkDestroyFence(this->virtualDevice, this->drawFence, nullptr);
+
+    }
+
 
     // CALLBACKS
 
@@ -890,26 +922,29 @@ namespace vlk {
 
         // TODO Select and use some logging libraries. Evaluate logging to a small service through some network
         // TODO Identify way to add colors
+        if (flags != VK_DEBUG_REPORT_INFORMATION_BIT_EXT &&
+            flags != VK_DEBUG_REPORT_DEBUG_BIT_EXT) {
+            if (flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT) {
+                std::cout << "[I| ";
+            } else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT) {
+                std::cout << "[W| ";
+            } else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT) {
+                std::cout << "[P| ";
+            } else if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) {
+                //std::cout << "\033[1;31mbold [ERROR ***** | ";
+                std::cout << "[E| ";
+            } else if (flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT) {
+                std::cout << "[D| ";
+            }
 
-        if (flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT) {
-            std::cout << "[INFO        | ";
-        } else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT) {
-            std::cout << "[WARNING *** | ";
-        } else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT) {
-            std::cout << "[PERFORMANCE | ";
-        } else if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) {
-            //std::cout << "\033[1;31mbold [ERROR ***** | ";
-            std::cout << "[ERROR ***** | ";
-        } else if (flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT) {
-            std::cout << "[DEBUG       | ";
+            cout << '(' << objType << ") ";
+            cout << layerPrefix << "] ";
+            cout << msg;
+            if (0 && (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)) {
+                std::cout << "\033[0m";
+            }
+            cout << endl;
         }
-        cout << '(' << objType << ") ";
-        cout << layerPrefix << "] ";
-        cout << msg;
-        if (0 && (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)) {
-            std::cout << "\033[0m";
-        }
-        cout << endl;
         return false;
     }
 }

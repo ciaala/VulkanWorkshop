@@ -12,30 +12,30 @@ set(CMAKE_CXX_FLAGS
 
 set(SOURCE_FILES
         src/main.cpp
-        src/vlk/vlk.h
-        src/vlk/VulkanContext.cpp
-        src/vlk/VulkanContext.h
-        src/vlk/ApplicationContext.cpp
-        src/vlk/ApplicationContext.h
-        src/vlk/Window.cpp
-        src/vlk/Window.h
-        src/vlk/VulkanUtility.cpp
-        src/vlk/VulkanUtility.h
-        src/vlk/shaders/GLSLShader.cpp
-        src/vlk/shaders/GLSLShader.h
-        src/vlk/shaders/ShaderManager.cpp
-        src/vlk/shaders/ShaderManager.h
-        src/vlk/shaders/Shader.cpp
-        src/vlk/shaders/Shader.h
-        src/vlk/shaders/GLSLUtility.cpp
-        src/vlk/shaders/GLSLUtility.h
-        src/vlk/VulkanBufferUtility.cpp
-        src/vlk/VulkanBufferUtility.h
-        src/vlk/VulkanPipeline.cpp
-        src/vlk/VulkanPipeline.h
+        src/engine/vlk/vlk.h
+        src/engine/vlk/VulkanContext.cpp
+        src/engine/vlk/VulkanContext.h
+        src/engine/vlk/ApplicationContext.cpp
+        src/engine/vlk/ApplicationContext.h
+        src/engine/vlk/Window.cpp
+        src/engine/vlk/Window.h
+        src/engine/vlk/VulkanUtility.cpp
+        src/engine/vlk/VulkanUtility.h
+        src/engine/vlk/shaders/GLSLShader.cpp
+        src/engine/vlk/shaders/GLSLShader.h
+        src/engine/vlk/shaders/ShaderManager.cpp
+        src/engine/vlk/shaders/ShaderManager.h
+        src/engine/vlk/shaders/Shader.cpp
+        src/engine/vlk/shaders/Shader.h
+        src/engine/vlk/shaders/GLSLUtility.cpp
+        src/engine/vlk/shaders/GLSLUtility.h
+        src/engine/vlk/VulkanBufferUtility.cpp
+        src/engine/vlk/VulkanBufferUtility.h
+        src/engine/vlk/VulkanPipeline.cpp
+        src/engine/vlk/VulkanPipeline.h
 
 
-        src/vlk/data/cube_data.h)
+        src/engine/vlk/data/cube_data.h src/engine/vlk/VertexBufferManager.cpp src/engine/vlk/VertexBufferManager.h)
 
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -113,7 +113,7 @@ else ()
     message(FATAL_ERROR "Operating System ${CMAKE_SYSTEM_NAME} is not managed by this build software")
 endif ()
 
-include_directories(${VULKAN_INCLUDES} ${PROJECT_SOURCE_DIR}/src/vlk ${PROJECT_SOURCE_DIR}/src/data ${PLATFORM_INCLUDES} ${VULKAN_GLSDK_INCLUDES})
+include_directories(${VULKAN_INCLUDES} src/engine/vlk ${PROJECT_SOURCE_DIR}/src/data ${PLATFORM_INCLUDES} ${VULKAN_GLSDK_INCLUDES})
 # ${VULKAN_SAMPLES}
 
 add_executable(VulkanWorkshop ${SOURCE_FILES})

@@ -10,6 +10,7 @@
 #define NUM_VIEWPORTS 1
 #define NUM_SCISSORS NUM_VIEWPORTS
 #define NUM_SAMPLES VK_SAMPLE_COUNT_1_BIT
+
 namespace vlk {
     class VulkanPipeline {
     private:
@@ -36,7 +37,7 @@ namespace vlk {
 
         void initColorBlendState();
 
-        void initViewportState();
+        void initViewportState(uint32_t viewportsNum);
 
         void initDepthStencil();
 
@@ -62,8 +63,12 @@ namespace vlk {
         );
 
         ~VulkanPipeline();
-
+        void  bindGraphic(const VkCommandBuffer &commandBuffer,
+                          const vector<VkDescriptorSet> &descriptorSetList,
+                          const vector<VkBuffer> &vectorBuffers);
         void init();
+
+        void log(const uint8_t level, const char* string);
     };
 
 }

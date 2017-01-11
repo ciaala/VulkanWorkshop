@@ -73,7 +73,7 @@ namespace vlk {
         void createDescriptorSet(
                 VkDevice &virtualDevice,
                 VkDescriptorPool &descriptorPool,
-                std::vector<VkDescriptorSet> &descriptorSetList,
+                vector<VkDescriptorSet> &descriptorSetList,
                 const uint32_t NUM_DESCRIPTOR_SETS,
                 pipeline_info &pipelineInfo);
 
@@ -98,8 +98,19 @@ namespace vlk {
                               VkImageAspectFlags aspectMask,
                               VkImageLayout old_image_layout,
                               VkImageLayout new_image_layout);
-    };
 
+
+        static
+        void initViewPort(VkViewport &viewport, const float height, const float width, uint32_t numViewports, const VkCommandBuffer &cmd);
+
+        static
+        void prensetImage(VkDevice const &virtualDevice, VkFence const *drawFence, VkQueue const &presentQueue, const uint64_t fenceTimeout,
+                          const vector<VkSwapchainKHR> &swapChains, uint32_t *currentBuffer);
+
+        static
+        void initScissors(VkCommandBuffer &commandBuffer, VkRect2D &scissor, const uint32_t width, uint32_t height);
+
+    };
 }
 
 #endif //VULKANWORKSHOP_VULKANUTILITY_H
